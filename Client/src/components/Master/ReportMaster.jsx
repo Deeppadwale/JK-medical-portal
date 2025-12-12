@@ -241,28 +241,7 @@ function ReportMaster() {
             accessor: "report_name",
             cell: (row) => row.report_name || "-"
         },
-        { 
-            header: "Created By", 
-            accessor: "Created_by",
-            cell: (row) => row.Created_by || "-"
-        },
-        { 
-            header: "Modified By", 
-            accessor: "Modified_by",
-            cell: (row) => row.Modified_by || "-"
-        },
-        { 
-            header: "Created At", 
-            accessor: "Created_at",
-            cell: (row) => {
-                if (!row.Created_at) return "-";
-                try {
-                    return new Date(row.Created_at).toLocaleDateString();
-                } catch {
-                    return row.Created_at;
-                }
-            }
-        },
+       
         {
             header: "Action",
             accessor: "action",

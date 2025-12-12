@@ -1460,8 +1460,9 @@ const handlePreviewFile = async (filename) => {
                        
                     
                     
-                    <div className="p-6">
+                   <div className="max-w-full mx-auto">
                         <TableUtility
+                        title="Member Report"
                            headerContent={
                         <div className="flex justify-between items-center mb-6">
                             <CreateNewButton 
