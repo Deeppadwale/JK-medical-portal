@@ -1,0 +1,23 @@
+import { configureStore } from '@reduxjs/toolkit';
+
+import { userMasterApi } from '../services/userMasterApi';
+import { memberMasterApi } from '../services/medicalAppoinmentApi';
+import {reportMasterApi} from '../services/reportMasterApi';
+import { memberReportApi } from '../services/memberReportApi';
+
+export const store = configureStore({
+  reducer: {
+    [userMasterApi.reducerPath]: userMasterApi.reducer,
+    [memberMasterApi.reducerPath]: memberMasterApi.reducer,
+    [reportMasterApi.reducerPath]: reportMasterApi.reducer,
+    [memberReportApi.reducerPath]: memberReportApi.reducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware()
+      // .prepend(listenerMiddleware.middleware)
+      .concat(userMasterApi.middleware)
+      .concat(memberMasterApi.middleware)
+      .concat(reportMasterApi.middleware)
+      .concat(memberReportApi.middleware),
+
+});
