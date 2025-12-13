@@ -8,8 +8,11 @@ import os
 
 app = FastAPI()
 
-# Create upload directory
- 
+
+UPLOAD_FOLDER = "upload/medical_report"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.mount("/files", StaticFiles(directory=UPLOAD_FOLDER), name="files")
+
 app.include_router(user_controller.router)
 app.include_router(memberMaster_controller.router)
 app.include_router(reportMaster_Controller.router)

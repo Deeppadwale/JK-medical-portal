@@ -1,8 +1,3 @@
-// 
-
-
-
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Login from "./Pages/Login/Login";
 import MainLayout from "./common/layout/mainlayout";
@@ -28,5 +23,4 @@ function App() {
     </Router>
   );
 }
-
 export default App;

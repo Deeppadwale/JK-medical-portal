@@ -305,7 +305,7 @@ function ReportMaster() {
     }
 
     return (
-        <div className="bg-gray-50 min-h-screen font-inter p-4 md:p-6">
+        <div className="">
             {/* Notification */}
             {notification.show && (
                 <div
@@ -348,13 +348,35 @@ function ReportMaster() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={handleModalClose}
-                title={editId ? "Edit Report" : "Add New Report"}
+                title={editId ? "" : ""}
                 size="lg"
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Doc No */}
-                        <div>
+                      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 p-6 mb-4">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-200 rounded-full opacity-20"></div>
+            <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-indigo-200 rounded-full opacity-20"></div>
+            
+            <div className="relative z-10">
+                <div className="flex items-center space-x-3 mb-2">
+                    <div className="p-2 bg-white rounded-lg shadow-sm">
+                        {editId ? (
+                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                        )}
+                    </div>
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">
+                            {editId ? "Update Report Details" : "Add New Report"}
+                        </h2>
+                        <p className="text-sm text-gray-600">
+                            {editId ? "Update the member information below" : "Fill in the member information below"}
+                        </p>
+                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Doc No
                             </label>
@@ -366,8 +388,12 @@ function ReportMaster() {
                                 className="w-full bg-gray-100 border border-gray-300 rounded-lg p-2.5 text-gray-600 cursor-not-allowed"
                             />
                         </div>
-
-                        {/* Report Name */}
+                    </div>
+                </div>
+            </div>
+        </div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                       
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Report Name *
@@ -378,11 +404,12 @@ function ReportMaster() {
                                 value={formData.report_name}
                                 onChange={handleInputChange}
                                 required
-                                className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
                                 placeholder="Enter report name"
                                 maxLength={100}
                             />
                         </div>
+
 
                         {/* Created By */}
                         {/* <div>
@@ -458,7 +485,7 @@ function ReportMaster() {
                 </form>
             </Modal>
 
-            {/* Delete Confirmation Modal */}
+          
             <Modal
                 isOpen={showDeleteConfirmModal}
                 onClose={() => setShowDeleteConfirmModal(false)}

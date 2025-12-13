@@ -239,7 +239,7 @@ import React, { useState, useEffect } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useLoginMutation } from "../../services/userMasterApi";
-import logo from "../../assets/user.png";
+import logo from "../../assets/jklogo.png";
 
 function LoginPage() {
   const navigate = useNavigate();
@@ -272,7 +272,7 @@ function LoginPage() {
       }).unwrap();
 
       // ✅ Redirect on success
-      navigate("/app/dashboard");
+      navigate("/app/memberMaster");
     } catch (err) {
       console.error("Login failed:", err);
       setError(err.data?.detail || "Login failed. Please check credentials.");
@@ -287,7 +287,7 @@ function LoginPage() {
       animate={controls}
       style={{
         background:
-          "linear-gradient(-45deg, #000000, #020d2b, #001F3F, #0b0033)",
+          "linear-gradient(-45deg, #000000, #020d2b, #c8d1daff, #bab8c0ff)",
         backgroundSize: "400% 400%",
       }}
     >
@@ -341,9 +341,7 @@ function LoginPage() {
           />
         </motion.div>
 
-        <h2 className="text-3xl font-bold text-center text-cyan-300 mb-2">
-          Secure Access
-        </h2>
+     
         <p className="text-center text-gray-400 mb-6">
           Please enter your credentials
         </p>
