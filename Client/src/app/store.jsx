@@ -4,6 +4,7 @@ import { userMasterApi } from '../services/userMasterApi';
 import { memberMasterApi } from '../services/medicalAppoinmentApi';
 import {reportMasterApi} from '../services/reportMasterApi';
 import { memberReportApi } from '../services/memberReportApi';
+import { otpVerificationApi } from '../services/otpVerification.jsx';
 
 export const store = configureStore({
   reducer: {
@@ -11,6 +12,7 @@ export const store = configureStore({
     [memberMasterApi.reducerPath]: memberMasterApi.reducer,
     [reportMasterApi.reducerPath]: reportMasterApi.reducer,
     [memberReportApi.reducerPath]: memberReportApi.reducer,
+    [otpVerificationApi.reducerPath]: otpVerificationApi.reducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -18,6 +20,7 @@ export const store = configureStore({
       .concat(userMasterApi.middleware)
       .concat(memberMasterApi.middleware)
       .concat(reportMasterApi.middleware)
-      .concat(memberReportApi.middleware),
+      .concat(memberReportApi.middleware)
+      .concat(otpVerificationApi.middleware),
 
 });

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .Models.database import engine, Base
-from .Controller import user_controller,memberMaster_controller,reportMaster_Controller,memberReport_controller
+from .Controller import user_controller,memberMaster_controller,reportMaster_Controller,memberReport_controller,optVerification_controller,familyMaster_controller
 import asyncio
 import os
 
@@ -17,6 +17,8 @@ app.include_router(user_controller.router)
 app.include_router(memberMaster_controller.router)
 app.include_router(reportMaster_Controller.router)
 app.include_router(memberReport_controller.router)
+app.include_router(optVerification_controller.router)
+app.include_router(familyMaster_controller.router)
 
 
 

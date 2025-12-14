@@ -1,39 +1,55 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Home, Users, FileText, Activity, Search } from "lucide-react";
-import ProfileDropdown from "../../Pages/Profile/Profile";
-import logo from "../../assets/jkIndia.png"; 
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import {
+  Menu,
+  X,
+  Users,
+  FileText,
+  Activity,
+  LogOut,
+} from "lucide-react";
+
+import logo from "../../assets/pulse.png"; 
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   const navItems = [
-    { label: "Member Master", path: "/app/memberMaster", icon: Users },
+    { label: "Dashbord", path: "/app/dashboard", icon: Users },
+    { label: "Member Master", path: "/app/member-master", icon: Users },
     { label: "Report Master", path: "/app/reportMaster", icon: FileText },
     { label: "Member Reports", path: "/app/MemberReport", icon: Activity },
   ];
 
+  const handleLogout = () => {
+    sessionStorage.clear();
+    navigate("/");
+  };
+
   return (
     <header className="sticky top-0 z-50">
-   <div className="h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500"></div>
+      {/* Top Accent Bar */}
+      <div className="h-1 bg-gradient-to-r from-red-500 via-red-600 to-red-500" />
 
-
-      <div className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50">
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200">
+        <div className="max-w-8xl mx-auto px-6">
           <div className="flex items-center justify-between h-20">
-            
-            <div className="flex items-center space-x-20">
-       
+
+            {/* LEFT: Logo + Menu */}
+            <div className="flex items-center space-x-14">
+              {/* LOGO */}
               <Link to="/app/memberMaster" className="flex items-center space-x-3">
                 <img
-                  src={logo} 
-                  alt="JK India Logo"
-                  className="w-15 h-20 object-contain rounded-xl shadow-lg"
+                  src={logo}
+                  alt="Logo"
+                  className="h-14 object-contain"
                 />
-                
               </Link>
 
-              <nav className="hidden lg:flex items-center space-x-5">
+              {/* DESKTOP MENU */}
+              <nav className="hidden lg:flex items-center space-x-4">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = location.pathname === item.path;
@@ -42,125 +58,91 @@ export default function Navbar() {
                     <Link
                       key={item.path}
                       to={item.path}
-                      className={`
-                        group relative flex items-center space-x-2 px-4 py-2.5 rounded-xl
-                        transition-all duration-300
-                        ${isActive 
-                          ? "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900 shadow-sm" 
-                          : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"}
-                      `}
+                      className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all
+                        ${
+                          isActive
+                            ? "bg-gray-100 text-gray-900 shadow-sm"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
                     >
-                      <div className=""></div>
-
                       <Icon
                         size={18}
-                        className={`relative z-10 ${isActive ? "text-red-500" : "group-hover:text-red-500"} transition-colors`}
+                        className={isActive ? "text-red-500" : "text-gray-500"}
                       />
-                      <span className="relative z-10 font-medium">{item.label}</span>
-
-                      {isActive && (
-                        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-red-500 to-red-600 rounded-full"></div>
-                      )}
+                      <span className="font-medium">{item.label}</span>
                     </Link>
                   );
                 })}
               </nav>
             </div>
 
-            <div className="flex items-center space-x-8">
-           
-              <div className="hidden md:block">
-                <ProfileDropdown />
-              </div>
+            {/* RIGHT */}
+            <div className="flex items-center space-x-6">
+              {/* Logout */}
+              <button
+                onClick={handleLogout}
+                className="hidden lg:flex items-center space-x-2 px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 transition"
+              >
+                <LogOut size={18} />
+                <span className="font-medium">Logout</span>
+              </button>
 
-       
+              {/* Mobile Toggle */}
               <button
                 onClick={() => setOpen(!open)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Toggle menu"
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
               >
-                {open ? (
-                  <X className="w-6 h-6 text-gray-700" />
-                ) : (
-                  <Menu className="w-6 h-6 text-gray-700" />
-                )}
+                {open ? <X size={26} /> : <Menu size={26} />}
               </button>
             </div>
           </div>
         </div>
 
+        {/* MOBILE MENU */}
         {open && (
-          <div className="lg:hidden border-t border-gray-200/50 bg-white/95 backdrop-blur-xl animate-slideDown">
-            <div className="px-4 py-3">
-       
-              <nav className="space-y-1">
-                <Link
-                  to="/app/dashboard"
-                  onClick={() => setOpen(false)}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 ${
-                    location.pathname === "/app/dashboard"
-                      ? "bg-gradient-to-r from-red-50 to-red-100 text-red-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  }`}
-                >
-                  <Home size={20} />
-                  <span className="font-medium">Dashboard</span>
-                </Link>
+          <div className="lg:hidden border-t bg-white animate-slideDown">
+            <div className="px-4 py-3 space-y-1">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
 
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
-
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setOpen(false)}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-colors duration-200 group ${
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setOpen(false)}
+                    className={`flex items-center space-x-3 px-4 py-3 rounded-xl
+                      ${
                         isActive
-                          ? "bg-gradient-to-r from-gray-50 to-gray-100 text-gray-900"
+                          ? "bg-red-50 text-red-600"
                           : "text-gray-700 hover:bg-gray-50"
                       }`}
-                    >
-                      <Icon 
-                        size={20} 
-                        className={`${isActive ? "text-red-500" : "text-gray-500"} group-hover:text-red-500 transition-colors`} 
-                      />
-                      <span className="font-medium">{item.label}</span>
-                      {isActive && (
-                        <div className="ml-auto w-2 h-2 bg-red-500 rounded-full"></div>
-                      )}
-                    </Link>
-                  );
-                })}
+                  >
+                    <Icon size={20} />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                );
+              })}
 
-                <div className="pt-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-300 text-sm"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4 border-t border-gray-200">
-                  <div className="px-2">
-                    <ProfileDropdown onClose={() => setOpen(false)} />
-                  </div>
-                </div>
-              </nav>
+              {/* Mobile Logout */}
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50"
+              >
+                <LogOut size={20} />
+                <span className="font-medium">Logout</span>
+              </button>
             </div>
           </div>
         )}
       </div>
 
+      {/* Animation */}
       <style jsx>{`
         @keyframes slideDown {
           from {
             opacity: 0;
-            transform: translateY(-10px);
+            transform: translateY(-8px);
           }
           to {
             opacity: 1;

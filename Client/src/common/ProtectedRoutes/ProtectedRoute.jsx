@@ -26,30 +26,43 @@
 // export default ProtectedRoute;
 
 
-import { Navigate, useLocation } from "react-router-dom";
-import { useGetCurrentUserQuery } from "../../services/userMasterApi";
+// import { Navigate, useLocation } from "react-router-dom";
+// import { useGetCurrentUserQuery } from "../../services/userMasterApi";
 
-const ProtectedRoute = ({ children }) => {
-  const location = useLocation();
+// const ProtectedRoute = ({ children }) => {
+//   const location = useLocation();
 
   
-  const { data: user, isLoading, isError } = useGetCurrentUserQuery();
+//   const { data: user, isLoading, isError } = useGetCurrentUserQuery();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-500">
-        Checking authentication...
-      </div>
-    );
+//   if (isLoading) {
+//     return (
+//       <div className="flex items-center justify-center h-screen text-gray-500">
+//         Checking authentication...
+//       </div>
+//     );
+//   }
+
+//   //  If API says not authenticated
+//   if (isError || !user) {
+//     return <Navigate to="/" state={{ from: location }} replace />;
+//   }
+
+//   //  If authenticated
+//   return children;
+// };
+
+// export default ProtectedRoute;
+
+
+import { Navigate } from "react-router-dom";
+
+export default function ProtectedRoute({ children }) {
+  const familyId = sessionStorage.getItem("family_id");
+
+  if (!familyId) {
+    return <Navigate to="/" replace />;
   }
 
-  //  If API says not authenticated
-  if (isError || !user) {
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
-
-  //  If authenticated
   return children;
-};
-
-export default ProtectedRoute;
+}

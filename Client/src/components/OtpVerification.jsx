@@ -1,19 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSendOtpMutation, useVerifyOtpMutation } from '../services/otp_verificationApi';
-import { decryptData } from '../common/Functions/DecryptData';
 import { useNavigate } from 'react-router-dom';
 
 const OtpVerification = () => {
   const navigate = useNavigate();
 
-  const userData = sessionStorage.getItem('user_data')
-    ? decryptData(sessionStorage.getItem('user_data'))
-    : null;
-
-  const uid = userData?.uid ? Number(userData.uid) : null;
-  const initialMobile = userData?.Mobile || "";
-
-  const [mobile, setMobile] = useState(initialMobile);
+  const [mobile, setMobile] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
@@ -21,95 +13,98 @@ const OtpVerification = () => {
   const [sendOtp, { isLoading: sending }] = useSendOtpMutation();
   const [verifyOtp, { isLoading: verifying }] = useVerifyOtpMutation();
 
-  // Countdown effect
+  // Countdown
   useEffect(() => {
     if (timer <= 0) return;
-    const interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+    const interval = setInterval(() => setTimer(t => t - 1), 1000);
     return () => clearInterval(interval);
   }, [timer]);
 
-  const isValidMobile = (num) => /^\+\d{1,3}\d{6,14}$/.test(num);
+  // Accept 10-digit or +91XXXXXXXXXX
+  const normalizeMobile = (num) => num.replace(/\D/g, '').slice(-10);
 
+  const isValidMobile = (num) => normalizeMobile(num).length === 10;
+
+  // =========================
+  // Send OTP
+  // =========================
   const handleSendOtp = async () => {
-    if (!uid) return alert("User ID not found!");
-    if (!isValidMobile(mobile)) return alert("Enter a valid mobile number with country code (e.g., +919876543210)");
+    if (!isValidMobile(mobile)) {
+      return alert("Enter a valid 10-digit mobile number");
+    }
 
     try {
-      console.log("Payload to send OTP:", { uid, mobile });
-      await sendOtp({ uid, mobile }).unwrap();
+      await sendOtp({
+        mobile: normalizeMobile(mobile),
+      }).unwrap();
+
       setOtpSent(true);
-      setTimer(60); 
-      alert("OTP sent successfully!");
+      setTimer(60);
+      alert("OTP sent successfully");
     } catch (err) {
-      console.error("Send OTP error:", err);
+      console.error(err);
       alert(err?.data?.detail || "Failed to send OTP");
     }
   };
 
+  // =========================
+  // Verify OTP
+  // =========================
   const handleVerifyOtp = async () => {
-    if (!otp) return alert("Enter OTP!");
-    try {
-      console.log("Payload to verify OTP:", { uid, otp_code: otp });
-      const res = await verifyOtp({ uid, otp_code: otp }).unwrap();
-      alert(res.message);
-      navigate("/dashboard"); 
-    } catch (err) {
-      console.error("Verify OTP error:", err);
-      if (err?.data?.detail) {
-        const messages = Array.isArray(err.data.detail)
-          ? err.data.detail.map(d => d.msg || JSON.stringify(d)).join("\n")
-          : err.data.detail;
-        alert(messages);
-      } else {
-        alert("OTP verification failed");
-      }
-    }
-  };
+    if (!otp) return alert("Enter OTP");
 
-  const formatTime = (sec) => {
-    return sec.toString().padStart(2, '0');
+    try {
+      const res = await verifyOtp({
+        mobile: normalizeMobile(mobile),
+        otp_code: otp,
+      }).unwrap();
+
+      alert(res.message);
+      navigate('/dashboard');
+    } catch (err) {
+      console.error(err);
+      alert(err?.data?.detail || "OTP verification failed");
+    }
   };
 
   return (
     <div style={{
       maxWidth: '420px',
-      margin: '200px auto',
+      margin: '150px auto',
       padding: '30px',
       borderRadius: '12px',
       boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-      background: '#fff',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif'"
+      background: '#fff'
     }}>
-      <h2 style={{ textAlign: 'center', marginBottom: '25px', color: '#333' }}>OTP Verification</h2>
+      <h2 style={{ textAlign: 'center', marginBottom: '25px' }}>
+        OTP Verification
+      </h2>
 
       <input
         type="text"
         value={mobile}
         onChange={e => setMobile(e.target.value)}
-        placeholder="+91XXXXXXXXXX"
+        placeholder="Enter mobile number"
         style={{
           width: '100%',
           padding: '12px',
           borderRadius: '8px',
           marginBottom: '20px',
-          border: '1px solid #ccc',
-          fontSize: '16px'
+          border: '1px solid #ccc'
         }}
-        readOnly={!!initialMobile}
       />
 
       <button
         onClick={handleSendOtp}
-        disabled={sending || !mobile}
+        disabled={sending}
         style={{
           width: '100%',
           padding: '12px',
           borderRadius: '8px',
-          border: 'none',
-          backgroundColor: '#007BFF',
+          background: '#007BFF',
           color: '#fff',
-          marginBottom: '20px',
-          cursor: 'pointer'
+          border: 'none',
+          marginBottom: '20px'
         }}
       >
         {sending ? "Sending..." : "Send OTP"}
@@ -127,46 +122,42 @@ const OtpVerification = () => {
               padding: '12px',
               borderRadius: '8px',
               marginBottom: '20px',
-              border: '1px solid #ccc',
-              fontSize: '16px'
+              border: '1px solid #ccc'
             }}
           />
 
           <button
             onClick={handleVerifyOtp}
-            disabled={verifying || !otp}
+            disabled={verifying}
             style={{
               width: '100%',
               padding: '12px',
               borderRadius: '8px',
-              border: 'none',
-              backgroundColor: '#28a745',
+              background: '#28a745',
               color: '#fff',
-              marginBottom: '15px',
-              cursor: 'pointer'
+              border: 'none',
+              marginBottom: '15px'
             }}
           >
             {verifying ? "Verifying..." : "Verify OTP"}
           </button>
 
-          <div style={{ textAlign: 'center', color: '#6660' }}>
+          <div style={{ textAlign: 'center' }}>
             {timer > 0 ? (
-              <span>OTP expires in: <strong>{formatTime(timer)}s</strong></span>
+              <span>OTP expires in <strong>{timer}s</strong></span>
             ) : (
               <button
                 onClick={handleSendOtp}
-
                 style={{
-                  padding: '8px 16px',
+                  background: 'transparent',
+                  color: '#dc3545',
+                  border: '1px solid #dc3545',
+                  padding: '6px 14px',
                   borderRadius: '6px',
-                  border: '1px solid #ff0000ff',
-                  background: '#ffffffff',
-                  color: '#ec0505ff',
-                  cursor: 'pointer',
-                  fontWeight: '600'
+                  cursor: 'pointer'
                 }}
               >
-                Resend OTP ?
+                Resend OTP
               </button>
             )}
           </div>
