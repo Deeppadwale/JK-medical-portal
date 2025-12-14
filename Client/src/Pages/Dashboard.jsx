@@ -23,7 +23,7 @@ export default function Dashboard() {
       icon: FileText,
       color: "from-emerald-500 to-teal-400",
       bgColor: "bg-gradient-to-br from-emerald-50 to-teal-50",
-      path: "/app/member-report",
+      path: "/app/reportMaster",
       stat: "45 reports",
     },
     {
@@ -37,12 +37,7 @@ export default function Dashboard() {
     },
   ];
 
-  const stats = [
-    { label: "Active Members", value: "8", change: "+2", icon: Activity },
-    { label: "Pending Reports", value: "3", change: "-1", icon: FileText },
-    { label: "Security Score", value: "98%", change: "+5%", icon: Shield },
-    { label: "Notifications", value: "5", change: "", icon: Bell },
-  ];
+
 
   return (
     <div className="w-full min-h-screen bg-gray-50">
@@ -105,37 +100,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* STATS GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {stats.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-500 font-medium mb-1">{stat.label}</p>
-                    <p className="text-3xl font-bold text-gray-800">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-lg ${index === 0 ? 'bg-blue-50' : index === 1 ? 'bg-emerald-50' : index === 2 ? 'bg-violet-50' : 'bg-amber-50'}`}>
-                    <Icon className={index === 0 ? 'text-blue-500' : index === 1 ? 'text-emerald-500' : index === 2 ? 'text-violet-500' : 'text-amber-500'} />
-                  </div>
-                </div>
-                {stat.change && (
-                  <div className="mt-4 flex items-center">
-                    <span className={`text-sm font-medium ${stat.change.startsWith('+') ? 'text-green-500' : 'text-rose-500'}`}>
-                      {stat.change}
-                    </span>
-                    <span className="text-xs text-gray-400 ml-2">from last month</span>
-                  </div>
-                )}
-              </motion.div>
-            );
-          })}
+    
         </div>
 
         {/* ACTION CARDS */}
@@ -175,33 +140,8 @@ export default function Dashboard() {
         </div>
 
         {/* RECENT ACTIVITY */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-10 bg-white rounded-2xl p-6 shadow-sm border border-gray-100"
-        >
-          <h3 className="text-xl font-semibold text-gray-800 mb-4">Recent Activity</h3>
-          <div className="space-y-4">
-            {[
-              { action: "New report added", time: "2 hours ago", user: "John Doe" },
-              { action: "Profile updated", time: "Yesterday", user: "You" },
-              { action: "Member added", time: "2 days ago", user: "Sarah Smith" },
-            ].map((item, index) => (
-              <div key={index} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-                <div className="flex items-center">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 mr-3"></div>
-                  <div>
-                    <p className="font-medium text-gray-800">{item.action}</p>
-                    <p className="text-sm text-gray-500">By {item.user}</p>
-                  </div>
-                </div>
-                <span className="text-sm text-gray-400">{item.time}</span>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      </div>
+       
+
 
       {/* FOOTER */}
       <footer className="mt-auto border-t border-gray-100 px-8 py-6">

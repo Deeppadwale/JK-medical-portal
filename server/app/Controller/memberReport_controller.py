@@ -1019,6 +1019,7 @@ async def get_max_doc(db: AsyncSession = Depends(get_db)):
 @router.post("/upload")
 async def upload_member_report(
     Member_id: int = Form(...),
+    Family_id: int = Form(...),
     purpose: str = Form(...),
     remarks: str = Form(None),
     Created_by: str = Form(...),
@@ -1033,6 +1034,7 @@ async def upload_member_report(
         # Prepare report data
         report_data = {
             "Member_id": Member_id,
+            "Family_id": Family_id,
             "purpose": purpose,
             "remarks": remarks,
             "Created_by": Created_by
@@ -1058,6 +1060,7 @@ async def upload_member_report(
 @router.post("/upload-with-files")
 async def upload_member_report_with_files(
     Member_id: int = Form(...),
+    Family_id: int = Form(...),
     purpose: str = Form(...),
     remarks: str = Form(None),
     Created_by: str = Form(...),
@@ -1073,6 +1076,7 @@ async def upload_member_report_with_files(
         # Prepare report data
         report_data = {
             "Member_id": Member_id,
+            "Family_id": Family_id,
             "purpose": purpose,
             "remarks": remarks,
             "Created_by": Created_by
@@ -1146,6 +1150,7 @@ async def get_report(
         "MemberReport_id": report.MemberReport_id,
         "doc_No": report.doc_No,
         "Member_id": report.Member_id,
+        "Family_id": report.Family_id,
         "purpose": report.purpose,
         "remarks": report.remarks,
         "Created_by": report.Created_by,

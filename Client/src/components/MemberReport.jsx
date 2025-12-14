@@ -1096,9 +1096,6 @@
 
 // export default MemberReport;
 
-
-
-
 import { useState, useEffect, useCallback } from "react";
 import Cookies from "js-cookie";
 import { decryptData } from "../common/Functions/DecryptData";
@@ -1106,7 +1103,7 @@ import TableUtility from "../common/TableUtility/TableUtility";
 import Modal from "../common/Modal/Modal";
 import CreateNewButton from "../common/Buttons/AddButton";
 import { PencilSquareIcon, CheckCircleIcon, XCircleIcon, PlusIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { Trash2, Loader2, Download, X, File, FileText, FileImage, Eye, Calendar, User, Building, Plus, Minus } from 'lucide-react';
+import { Trash2, Loader2, Download, X, File, FileText, FileImage, Eye, Calendar, User, Building, Plus, Minus, Users } from 'lucide-react';
 import {
     useGetMemberReportsQuery,
     useGetMaxDocNoQuery,
@@ -1136,11 +1133,12 @@ function MemberReport() {
     const [isPreviewOpen, setIsPreviewOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [activeDetailIndex, setActiveDetailIndex] = useState(0);
+    const [familyId, setFamilyId] = useState("");
 
     const initialFormData = {
         doc_No: "",
         Member_id: "",
+        Family_id: "",
         purpose: "",
         remarks: "",
         Created_by: "",
@@ -1163,6 +1161,14 @@ function MemberReport() {
         message: "",
         type: "success",
     });
+
+    // Get Family_id from session storage on component mount
+    useEffect(() => {
+        const storedFamilyId = sessionStorage.getItem("Family_id");
+        if (storedFamilyId) {
+            setFamilyId(storedFamilyId);
+        }
+    }, []);
 
     const {
         data: reports = [],
@@ -1408,6 +1414,7 @@ function MemberReport() {
             setFormData({
                 doc_No: reportWithPreview.doc_No?.toString() || "",
                 Member_id: reportWithPreview.Member_id?.toString() || "",
+                Family_id: reportWithPreview.Family_id?.toString() || familyId || "",
                 purpose: reportWithPreview.purpose || "",
                 remarks: reportWithPreview.remarks || "",
                 Created_by: reportWithPreview.Created_by || "",
@@ -1431,12 +1438,20 @@ function MemberReport() {
             setExistingFiles(existingFilesObj);
             setFiles(existingFilesObj);
         }
-    }, [editId, reportWithPreview]);
+    }, [editId, reportWithPreview, familyId]);
 
     const handleAddNew = async () => {
         setEditId(null);
         resetForm();
-        setActiveDetailIndex(0);
+        
+        // Set Family_id from session storage
+        const storedFamilyId = sessionStorage.getItem("family_id");
+        if (storedFamilyId) {
+            setFormData(prev => ({ 
+                ...prev, 
+                Family_id: storedFamilyId 
+            }));
+        }
 
         const userName = getUserNameFromCookie();
 
@@ -1507,11 +1522,19 @@ function MemberReport() {
             setIsSubmitting(false);
             return;
         }
+        
+        if (!formData.Family_id) {
+            showNotification("Family ID is required", "error");
+            setIsSubmitting(false);
+            return;
+        }
+        
         if (!formData.purpose.trim()) {
             showNotification("Purpose is required", "error");
             setIsSubmitting(false);
             return;
         }
+        
         if (!formData.details || formData.details.length === 0) {
             showNotification("At least one detail record is required", "error");
             setIsSubmitting(false);
@@ -1539,6 +1562,7 @@ function MemberReport() {
                 // CREATE new report with files
                 const reportData = {
                     Member_id: parseInt(formData.Member_id),
+                    Family_id: parseInt(formData.Family_id),
                     purpose: formData.purpose,
                     Created_by: userName,
                     remarks: formData.remarks || "",
@@ -1636,7 +1660,6 @@ function MemberReport() {
         setFiles({});
         setExistingFiles({});
         setEditId(null);
-        setActiveDetailIndex(0);
         setIsPreviewOpen(false);
         setPreviewFile(null);
     };
@@ -1673,7 +1696,6 @@ function MemberReport() {
                 }
             ]
         }));
-        setActiveDetailIndex(formData.details.length);
     };
 
     const handleRemoveDetail = (index) => {
@@ -1702,10 +1724,6 @@ function MemberReport() {
                 details: newDetails
             };
         });
-
-        if (activeDetailIndex >= index) {
-            setActiveDetailIndex(Math.max(0, activeDetailIndex - 1));
-        }
     };
 
     const handleDetailFileChange = (e, detailIndex, detailId = null) => {
@@ -1762,12 +1780,11 @@ function MemberReport() {
 
         if (isRemoved) {
             return (
-                <div className="p-3 border border-dashed border-gray-300 rounded text-center">
-                    <p className="text-gray-500">File removed</p>
+                <div className="p-2">
                     <input
                         type="file"
                         onChange={(e) => handleDetailFileChange(e, detailIndex, detailId)}
-                        className="w-full mt-2 p-2 border rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="w-full text-sm border rounded p-1.5 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                 </div>
             );
@@ -1778,26 +1795,26 @@ function MemberReport() {
                 <input
                     type="file"
                     onChange={(e) => handleDetailFileChange(e, detailIndex, detailId)}
-                    className="w-full p-2 border rounded file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    className="w-full text-sm border rounded p-1.5 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
             );
         }
 
-        const fileSize = isNewFile && file.size ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : '';
+        const fileSize = isNewFile && file.size ? `${(file.size / 1024).toFixed(1)} KB` : '';
 
         return (
-            <div className="flex items-center justify-between p-3 border rounded bg-gray-50 hover:bg-gray-100 transition">
-                <div className="flex items-center space-x-3 flex-1 min-w-0">
+            <div className="flex items-center justify-between p-2 border rounded bg-gray-50 hover:bg-gray-100 transition text-sm">
+                <div className="flex items-center space-x-2 flex-1 min-w-0">
                     <div className="flex-shrink-0">
                         {getFileIcon(filename)}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium truncate" title={filename}>
+                        <div className="flex items-center space-x-1">
+                            <span className="truncate" title={filename}>
                                 {filename}
                             </span>
                             {isNewFile && (
-                                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                                <span className="px-1 py-0.5 text-xs bg-blue-100 text-blue-800 rounded">
                                     New
                                 </span>
                             )}
@@ -1807,34 +1824,34 @@ function MemberReport() {
                         )}
                     </div>
                 </div>
-                <div className="flex items-center space-x-2 flex-shrink-0">
+                <div className="flex items-center space-x-1 flex-shrink-0">
                     {isExistingFile && (
                         <>
                             <button
                                 type="button"
                                 onClick={() => handlePreviewFile(filename)}
-                                className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
+                                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded"
                                 title="Preview"
                             >
-                                <Eye className="h-4 w-4" />
+                                <Eye className="h-3 w-3" />
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleDownloadFile(filename)}
-                                className="p-1.5 text-green-600 hover:text-green-800 hover:bg-green-50 rounded"
+                                className="p-1 text-green-600 hover:text-green-800 hover:bg-green-50 rounded"
                                 title="Download"
                             >
-                                <Download className="h-4 w-4" />
+                                <Download className="h-3 w-3" />
                             </button>
                         </>
                     )}
                     <button
                         type="button"
                         onClick={() => handleRemoveDetailFile(detailIndex, detailId)}
-                        className="p-1.5 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                        className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
                         title="Remove"
                     >
-                        <X className="h-4 w-4" />
+                        <X className="h-3 w-3" />
                     </button>
                 </div>
             </div>
@@ -1861,6 +1878,11 @@ function MemberReport() {
             header: 'Member',
             accessor: 'member_name',
             cellRenderer: (value, row) => row.member_name || getMemberName(row.Member_id)
+        },
+        {
+            header: 'Family ID',
+            accessor: 'Family_id',
+            cellRenderer: (value, row) => row.Family_id || "-"
         },
         {
             header: 'Purpose',
@@ -2007,7 +2029,7 @@ function MemberReport() {
                     resetForm();
                 }}
                 title=""
-                width="1000px"
+                width="1200px"
             >
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {/* Header Section */}
@@ -2072,8 +2094,29 @@ function MemberReport() {
                         </div>
                     </div>
 
-                    {/* Header Information */}
+                    {/* Header Information - Grid Layout */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Family ID */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
+                                <Users className="h-4 w-4 text-gray-500 mr-2" />
+                                Family ID *
+                            </label>
+                            <input
+                                type="text"
+                                name="Family_id"
+                                value={formData.Family_id || familyId}
+                                onChange={handleInputChange}
+                                required
+                                readOnly
+                                disabled
+                                className="w-full border border-gray-300 bg-gray-100 rounded-lg p-2.5 focus:outline-none cursor-not-allowed"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Retrieved from session storage
+                            </p>
+                        </div>
+
                         {/* Member */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
@@ -2098,7 +2141,7 @@ function MemberReport() {
                         </div>
 
                         {/* Purpose */}
-                        <div>
+                        <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                 Purpose *
                             </label>
@@ -2129,7 +2172,7 @@ function MemberReport() {
                         </div>
                     </div>
 
-                    {/* Details Section */}
+                    {/* Details Section - Table Structure */}
                     <div className="border-t pt-4">
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-lg font-semibold text-gray-800 flex items-center">
@@ -2139,118 +2182,109 @@ function MemberReport() {
                             <button
                                 type="button"
                                 onClick={handleAddDetail}
-                                className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-2"
+                                className="px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 flex items-center space-x-2 text-sm"
                             >
                                 <Plus className="h-4 w-4" />
-                                <span>Add Report</span>
+                                <span>Add Row</span>
                             </button>
                         </div>
 
-                        {/* Detail Tabs */}
-                        <div className="flex space-x-2 mb-4 overflow-x-auto pb-2">
-                            {formData.details.map((detail, index) => (
-                                <button
-                                    key={index}
-                                    type="button"
-                                    onClick={() => setActiveDetailIndex(index)}
-                                    className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${activeDetailIndex === index
-                                            ? 'bg-blue-100 text-blue-700 border border-blue-300'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        }`}
-                                >
-                                    <FileText className="h-4 w-4" />
-                                    <span>Report {index + 1}</span>
-                                    {formData.details.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRemoveDetail(index);
-                                            }}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </button>
-                                    )}
-                                </button>
-                            ))}
-                        </div>
-
-                        {/* Active Detail Form */}
-                        {formData.details.map((detail, index) => (
-                            <div
-                                key={index}
-                                className={`space-y-4 ${activeDetailIndex === index ? 'block' : 'hidden'}`}
+                        {/* Table Structure for Details */}
+                      {/* Table Structure for Details */}
+<div className="overflow-x-auto border rounded-lg">
+    <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+            <tr>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    #
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Report Date *
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Report Type *
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Doctor & Hospital
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    File
+                </th>
+                <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                </th>
+            </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+            {[...formData.details].reverse().map((detail, index, reversedArray) => {
+                const originalIndex = formData.details.length - 1 - index;
+                return (
+                    <tr key={originalIndex} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {reversedArray.length - index} {/* Show descending numbers */}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                            <input
+                                type="date"
+                                value={detail.report_date}
+                                onChange={(e) => handleDetailChange(originalIndex, 'report_date', e.target.value)}
+                                required
+                                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                            <select
+                                value={detail.Report_id}
+                                onChange={(e) => handleDetailChange(originalIndex, 'Report_id', e.target.value)}
+                                required
+                                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* Report Date */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                            <Calendar className="h-4 w-4 text-gray-500 mr-2" />
-                                            Report Date *
-                                        </label>
-                                        <input
-                                            type="date"
-                                            value={detail.report_date}
-                                            onChange={(e) => handleDetailChange(index, 'report_date', e.target.value)}
-                                            required
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition"
-                                        />
-                                    </div>
-
-                                    {/* Report Type */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Report Type *
-                                        </label>
-                                        <select
-                                            value={detail.Report_id}
-                                            onChange={(e) => handleDetailChange(index, 'Report_id', e.target.value)}
-                                            required
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition"
-                                        >
-                                            <option value="">Select Report Type</option>
-                                            {reportTypes.map(report => (
-                                                <option key={report.Report_id} value={report.Report_id}>
-                                                    {report.report_name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {/* Doctor/Hospital Name */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center">
-                                            <Building className="h-4 w-4 text-gray-500 mr-2" />
-                                            Doctor & Hospital Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={detail.Doctor_and_Hospital_name}
-                                            onChange={(e) => handleDetailChange(index, 'Doctor_and_Hospital_name', e.target.value)}
-                                            className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 hover:border-blue-400 transition"
-                                            placeholder="Dr. Name - Hospital Name"
-                                        />
-                                    </div>
-
-                                    {/* File Upload */}
-                                    <div className="md:col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Report File
-                                        </label>
-                                        <FileDisplay
-                                            file={files[detail.detail_id ? `detail_${detail.detail_id}` : `detail_${index}`]}
-                                            fieldName="uploaded_file_report"
-                                            detailIndex={index}
-                                            detailId={detail.detail_id}
-                                        />
-                                        <p className="text-xs text-gray-500 mt-1">
-                                            Max 10MB per file. Supported: PDF, Images, Documents
-                                        </p>
-                                    </div>
-                                </div>
+                                <option value="">Select Type</option>
+                                {reportTypes.map(report => (
+                                    <option key={report.Report_id} value={report.Report_id}>
+                                        {report.report_name}
+                                    </option>
+                                ))}
+                            </select>
+                        </td>
+                        <td className="px-4 py-3">
+                            <input
+                                type="text"
+                                value={detail.Doctor_and_Hospital_name}
+                                onChange={(e) => handleDetailChange(originalIndex, 'Doctor_and_Hospital_name', e.target.value)}
+                                className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Dr. Name - Hospital"
+                            />
+                        </td>
+                        <td className="px-4 py-3">
+                            <div className="w-64">
+                                <FileDisplay
+                                    file={files[detail.detail_id ? `detail_${detail.detail_id}` : `detail_${originalIndex}`]}
+                                    fieldName="uploaded_file_report"
+                                    detailIndex={originalIndex}
+                                    detailId={detail.detail_id}
+                                />
                             </div>
-                        ))}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveDetail(originalIndex)}
+                                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-red-700 bg-red-100 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                            >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Remove
+                            </button>
+                        </td>
+                    </tr>
+                );
+            })}
+        </tbody>
+    </table>
+</div>
+                        <p className="text-xs text-gray-500 mt-2">
+                            * Required fields. Max 10MB per file. Supported: PDF, Images, Documents
+                        </p>
                     </div>
 
                     {/* Buttons */}
@@ -2261,22 +2295,27 @@ function MemberReport() {
                                 setIsModalOpen(false);
                                 resetForm();
                             }}
-                            className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50"
+                            className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
                             disabled={isSubmitting}
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                             disabled={isSubmitting}
                         >
                             {isSubmitting ? (
-                                <span className="flex items-center">
+                                <>
                                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
                                     {editId ? "Updating..." : "Saving..."}
-                                </span>
-                            ) : editId ? "Update Report" : "Save Report"}
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircleIcon className="h-4 w-4 mr-2" />
+                                    {editId ? "Update Report" : "Save Report"}
+                                </>
+                            )}
                         </button>
                     </div>
                 </form>

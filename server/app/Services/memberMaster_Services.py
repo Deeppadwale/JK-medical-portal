@@ -101,14 +101,30 @@ from app.Models.memberMaster_model import MemberMaster
 # -----------------------
 # Get all members with optional Family_id
 # -----------------------
-async def get_all_members(db: AsyncSession, skip: int = 0, limit: int = 100, family_id: Optional[int] = None):
-    query = select(MemberMaster).order_by(MemberMaster.Member_id.desc()).offset(skip).limit(limit)
-    if family_id:
-        query = query.filter(MemberMaster.Family_id == family_id)
+# async def get_all_members(db: AsyncSession, skip: int = 0, limit: int = 100, family_id: Optional[int] = None):
+#     query = select(MemberMaster).order_by(MemberMaster.Member_id.desc()).offset(skip).limit(limit)
+#     if family_id:
+#         query = query.filter(MemberMaster.Family_id == family_id)
+#     result = await db.execute(query)
+#     return result.scalars().all()
+async def get_all_members(
+    db: AsyncSession,
+    skip: int = 0,
+    limit: int = 100,
+    family_id: Optional[int] = None
+):
+    query = (
+        select(MemberMaster)
+        .order_by(MemberMaster.Member_id.desc())
+        .offset(skip)
+        .limit(limit)
+    )
+
+    if family_id is not None:
+        query = query.where(MemberMaster.Family_id == family_id)
+
     result = await db.execute(query)
     return result.scalars().all()
-
-
 # -----------------------
 # Get max doc_no
 # -----------------------

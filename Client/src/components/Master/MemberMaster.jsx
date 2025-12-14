@@ -766,12 +766,15 @@ function MemberMaster() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [deleteIdToConfirm, setDeleteIdToConfirm] = useState(null);
 
-  const { 
-    data: tableData = [], 
-    isLoading, 
-    isError, 
-    refetch 
-  } = useGetMemberMastersQuery();
+const familyId = sessionStorage.getItem("family_id");
+
+const {
+  data: tableData = [],
+  isLoading,
+  isError,
+  refetch,
+} = useGetMemberMastersQuery(familyId ? Number(familyId) : undefined);
+
   
   const { 
     data: maxDocNoData, 

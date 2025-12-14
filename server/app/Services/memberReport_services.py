@@ -219,8 +219,10 @@ async def create_member_report_with_details(db: AsyncSession, report_data: dict,
         raise e
 
 
+from sqlalchemy import desc
+
 async def get_member_report_by_id(db: AsyncSession, report_id: int):
-    """Get report with all details"""
+    """Get report with all details (details in descending order by report_date)"""
     result = await db.execute(
         select(MemberReport)
         .filter(MemberReport.MemberReport_id == report_id)
@@ -228,15 +230,16 @@ async def get_member_report_by_id(db: AsyncSession, report_id: int):
     report = result.scalar_one_or_none()
     
     if report:
-        # Get details
+        # Get details in descending order
         details_result = await db.execute(
             select(MemberReportDetail)
             .filter(MemberReportDetail.MemberReport_id == report_id)
-            .order_by(MemberReportDetail.report_date)
+            .order_by(desc(MemberReportDetail.report_date))
         )
         report.details = details_result.scalars().all()
     
     return report
+
 
 
 async def get_all_member_reports(

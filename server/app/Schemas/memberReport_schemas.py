@@ -45,6 +45,7 @@ class MemberReportDetailResponse(MemberReportDetailBase):
 
 class MemberReportBase(BaseModel):
     Member_id: int
+    Family_id: int 
     purpose: str
     remarks: Optional[str] = None
     Created_by: str
@@ -57,6 +58,7 @@ class MemberReportCreate(MemberReportBase):
 
 class MemberReportResponse(MemberReportBase):
     MemberReport_id: int
+    Family_id: int
     doc_No: int
     Created_at: date
     details: List[MemberReportDetailResponse] = []

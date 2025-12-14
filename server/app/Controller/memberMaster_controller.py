@@ -116,14 +116,39 @@ INSURANCE_FOLDER = os.path.join(UPLOAD_ROOT, "insurance")
 for folder in [PAN_FOLDER, ADHAR_FOLDER, INSURANCE_FOLDER]:
     os.makedirs(folder, exist_ok=True)
 
+# @router.get("/", response_model=List[MemberResponse])
+# async def list_all_members(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+#     """
+#     Get all members (paginated with skip & limit)
+#     """
+#     members = await get_all_members(db, skip=skip, limit=limit)
+#     return members
+
+
 @router.get("/", response_model=List[MemberResponse])
-async def list_all_members(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
+async def list_all_members(
+    skip: int = 0,
+    limit: int = 100,
+    family_id: Optional[int] = None,
+    db: AsyncSession = Depends(get_db),
+):
     """
-    Get all members (paginated with skip & limit)
+    Get all members (optionally filtered by family_id)
     """
-    members = await get_all_members(db, skip=skip, limit=limit)
+    members = await get_all_members(
+        db,
+        skip=skip,
+        limit=limit,
+        family_id=family_id
+    )
     return members
 
+@router.get("/family/{family_id}", response_model=List[MemberResponse])
+async def get_members_by_family(
+    family_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    return await get_all_members(db=db, family_id=family_id)
 
 # -----------------------
 # Get member by Member_id

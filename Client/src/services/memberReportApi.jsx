@@ -397,6 +397,7 @@ export const memberReportApi = createApi({
                 
                 // Add basic report data
                 formData.append("Member_id", reportData.Member_id.toString());
+                formData.append("Family_id", reportData.Family_id.toString());
                 formData.append("purpose", reportData.purpose);
                 formData.append("Created_by", reportData.Created_by);
                 
@@ -430,6 +431,7 @@ export const memberReportApi = createApi({
                 
                 // Add basic report data
                 formData.append("Member_id", reportData.Member_id.toString());
+                formData.append("Family_id", reportData.Family_id.toString());
                 formData.append("purpose", reportData.purpose);
                 formData.append("Created_by", reportData.Created_by);
                 

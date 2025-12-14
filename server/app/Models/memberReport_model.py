@@ -30,7 +30,7 @@ from datetime import date
 from app.Models.database import Base
 
 
-class MemberReport(Base):
+class MemberReport(Base): 
     __tablename__ = "MemberReport"
 
     MemberReport_id = Column(Integer, primary_key=True, autoincrement=True)
@@ -41,6 +41,7 @@ class MemberReport(Base):
     Created_by = Column(NVARCHAR(50), nullable=False)
     Modified_by = Column(NVARCHAR(50), nullable=True)
     Created_at = Column(Date, nullable=False, default=date.today)
+    Family_id = Column(Integer, ForeignKey("FamilyMaster.Family_id"), nullable=False)
 
 
 

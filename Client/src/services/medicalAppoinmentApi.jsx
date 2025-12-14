@@ -12,10 +12,12 @@ export const memberMasterApi = createApi({
     // Get All Members (optional Family_id filter)
     // =========================
     getMemberMasters: builder.query({
-      query: (family_id) =>
-        family_id ? `/members/family/${family_id}` : "/members",
-      providesTags: ["MemberMaster"],
-    }),
+    query: (family_id) =>
+      family_id
+        ? `/members?family_id=${family_id}`
+        : "/members",
+    providesTags: ["MemberMaster"],
+  }),
 
     // =========================
     // Get Member by ID
