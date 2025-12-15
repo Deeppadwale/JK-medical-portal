@@ -13,4 +13,4 @@ class FamilyMaster(Base):
     Email_Password = Column(NVARCHAR(200), nullable=True)
     Mobile= Column(NVARCHAR(15), nullable=True)
     User_Name = Column(NVARCHAR(50), nullable=False)
-    User_Password = Column(NVARCHAR(200), nullable=False)
+    User_Password = Column(NVARCHAR(200), nullable=False) 
