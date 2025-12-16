@@ -905,114 +905,175 @@ const {
     document.body.removeChild(link);
   };
 
-  const columns = [
-    { 
-      header: "Doc No", 
-      accessor: "doc_No",
-      cell: (row) => row.doc_No || "-",
-      className: "w-24"
-    },
-    { 
-      header: "Name", 
-      accessor: "Member_name",
-      cell: (row) => row.Member_name || "-",
-      className: "w-48"
-    },
-    { 
-      header: "Mobile", 
-      accessor: "Mobile_no",
-      cell: (row) => row.Mobile_no || "-",
-      className: "w-36"
-    },
-    { 
-      header: "Family ID", 
-      accessor: "Family_id",
-      cell: (row) => row.Family_id || "-",
-      className: "w-24 text-center"
-    },
-    {
-      header: "Blood Group",
-      accessor: "blood_group",
-      cell: (row) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.blood_group ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'
-        }`}>
-          {row.blood_group || "N/A"}
-        </span>
-      ),
-      className: "w-28 text-center"
-    },
-    {
-      header: "DOB",
-      accessor: "date_of_birth",
-      cell: (row) => row.date_of_birth ? new Date(row.date_of_birth).toLocaleDateString('en-IN') : "-",
-      className: "w-32"
-    },
-    {
-      header: "Documents",
-      accessor: "documents",
-      cell: (row) => (
-        <div className="flex flex-wrap gap-1">
-          {row.pan_no && (
-            <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
-              PAN
-            </span>
-          )}
-          {row.adhar_card && (
-            <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">
-              Aadhar
-            </span>
-          )}
-          {row.insurance && (
-            <span className="px-2 py-1 text-xs bg-purple-100 text-purple-800 rounded">
-              Insurance
-            </span>
-          )}
-        </div>
-      ),
-      className: "w-36"
-    },
-    {
-      header: "Created By",
-      accessor: "Created_by",
-      cell: (row) => row.Created_by || "-",
-      className: "w-40"
-    },
-    {
-      header: "Action",
-      accessor: "action",
-      isAction: true,
-      className: "text-center",
-      actionRenderer: (row) => (
-        <div className="flex justify-center space-x-2">
-          <button
-            type="button"
-            className="p-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition"
-            onClick={() => handleViewMember(row)}
-            title="View Details"
-          >
-            <Eye className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="p-2 text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition"
-            onClick={() => handleEdit(row)}
-            title="Edit Member"
-          >
-            <PencilSquareIcon className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="p-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition"
-            onClick={() => handleDelete(row.Member_id || row.id)}
-            title="Delete Member"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        </div>
-      ),
-    },
-  ];
+  // const columns = [
+  //   { 
+  //     header: "Doc No", 
+  //     accessor: "doc_No",
+  //     cell: (row) => row.doc_No || "-",
+  //     className: "w-24"
+  //   },
+  //   { 
+  //     header: "Name", 
+  //     accessor: "Member_name",
+  //     cell: (row) => row.Member_name || "-",
+  //     className: "w-48"
+  //   },
+  //   { 
+  //     header: "Mobile", 
+  //     accessor: "Mobile_no",
+  //     cell: (row) => row.Mobile_no || "-",
+  //     className: "w-36"
+  //   },
+  
+  //   {
+  //     header: "Blood Group",
+  //     accessor: "blood_group",
+  //     cell: (row) => (
+  //       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+  //         row.blood_group ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-600'
+  //       }`}>
+  //         {row.blood_group || "N/A"}
+  //       </span>
+  //     ),
+  //     className: "w-28 text-center"
+  //   },
+  //   {
+  //     header: "DOB",
+  //     accessor: "date_of_birth",
+  //     cell: (row) => row.date_of_birth ? new Date(row.date_of_birth).toLocaleDateString('en-IN') : "-",
+  //     className: "w-32"
+  //   },
+  //   {
+  //     header: "Action",
+  //     accessor: "action",
+  //     isAction: true,
+  //     className: "text-center",
+  //     actionRenderer: (row) => (
+  //       <div className="flex justify-center space-x-2">
+  //         <button
+  //           type="button"
+  //           className="p-2 text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 transition"
+  //           onClick={() => handleViewMember(row)}
+  //           title="View Details"
+  //         >
+  //           <Eye className="h-4 w-4" />
+  //         </button>
+  //         <button
+  //           type="button"
+  //           className="p-2 text-green-600 bg-green-50 rounded-md hover:bg-green-100 transition"
+  //           onClick={() => handleEdit(row)}
+  //           title="Edit Member"
+  //         >
+  //           <PencilSquareIcon className="h-4 w-4" />
+  //         </button>
+  //         <button
+  //           type="button"
+  //           className="p-2 text-red-600 bg-red-50 rounded-md hover:bg-red-100 transition"
+  //           onClick={() => handleDelete(row.Member_id || row.id)}
+  //           title="Delete Member"
+  //         >
+  //           <Trash2 className="h-4 w-4" />
+  //         </button>
+  //       </div>
+  //     ),
+  //   },
+  // ];
+
+   const columns = [
+  {
+    header: "Doc No",
+    accessor: "doc_No",
+    cellRenderer: (row) => (
+      <div className="font-mono font-semibold text-gray-800">
+        {row.doc_No ?? "N/A"}
+      </div>
+    ),
+  },
+  {
+    header: "Member Name",
+    accessor: "Member_name",
+    cellRenderer: (row) => (
+      <div className="text-gray-800 font-medium">
+        {row.Member_name ?? "N/A"}
+      </div>
+    ),
+  },
+  {
+    header: "Mobile No",
+    accessor: "Mobile_no",
+    cellRenderer: (row) => (
+      <div className="text-gray-700">
+        {row.Mobile_no ?? "N/A"}
+      </div>
+    ),
+  },
+  {
+    header: "Blood Group",
+    accessor: "blood_group",
+    cellRenderer: (row) => (
+      <div className="text-gray-700">
+        {row.blood_group ?? "N/A"}
+      </div>
+    ),
+  },
+  {
+    header: "Date_of Birth",
+    accessor: "date_of_birth",
+    cellRenderer: (row) => (
+      <div className="text-gray-700">
+        {row.date_of_birth ?? "N/A"}
+      </div>
+    ),
+  },
+  {
+    header: "Actions",
+    accessor: "actions",
+    isAction: true,
+    className: "text-center",
+    actionRenderer: (row) => (
+      <div className="flex justify-center space-x-2">
+        {/* View */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewMember(row);
+          }}
+          title="View"
+          className="p-2.5 hover:bg-green-50 rounded-lg transition-all duration-200"
+        >
+          <Eye className="h-5 w-5 text-green-600" />
+        </button>
+
+        {/* Edit */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleEdit(row);
+          }}
+          title="Edit"
+          className="p-2.5 hover:bg-blue-50 rounded-lg transition-all duration-200"
+        >
+          <PencilSquareIcon className="h-5 w-5 text-blue-600" />
+        </button>
+
+        {/* Delete */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDelete(row.Member_id || row.id);
+          }}
+          title="Delete"
+          className="p-2.5 hover:bg-red-50 rounded-lg transition-all duration-200"
+        >
+          <Trash2 className="h-5 w-5 text-red-600" />
+        </button>
+      </div>
+    ),
+  },
+];
+
+
+      
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -1293,16 +1354,7 @@ const {
                   disabled={isMaxDocLoading}
                   label={isMaxDocLoading ? "Loading..." : "Add New Family Member"}
                 />
-                {userData.Family_id && (
-                  <div className="px-3 py-1.5 bg-blue-100 text-blue-800 rounded-md text-sm font-medium">
-                    Family ID: {userData.Family_id}
-                  </div>
-                )}
-                {userData.User_name && (
-                  <div className="px-3 py-1.5 bg-green-100 text-green-800 rounded-md text-sm font-medium">
-                    User: {userData.User_name}
-                  </div>
-                )}
+               
               </div>
             </div>
           }
@@ -1419,7 +1471,7 @@ const {
             <div className="relative group">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <UserCircleIcon className="w-4 h-4 mr-1 text-gray-400" />
-                Member Name <span className="text-red-500 ml-1">*</span>
+                 Family Member Name <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <input
@@ -1427,7 +1479,7 @@ const {
                   name="Member_name"
                   value={formData.Member_name}
                   onChange={handleInputChange}
-                  required
+                  
                   placeholder="Enter full name"
                   maxLength={100}
                   className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
@@ -1523,51 +1575,6 @@ const {
               <p className="text-xs text-gray-500 mt-2">Select blood group type</p>
             </div>
 
-            {/* Created By - Read Only */}
-            <div className="relative group">
-              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                <UserCircleIcon className="w-4 h-4 mr-1 text-blue-400" />
-                {editId ? "Created By" : "Created By (Auto)"}
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  name="Created_by"
-                  value={formData.Created_by}
-                  readOnly
-                  className="w-full bg-blue-50 border-2 border-blue-200 rounded-xl p-3 pl-10 text-gray-700 font-medium focus:outline-none transition-all duration-200"
-                />
-                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                  <UserCircleIcon className="w-5 h-5 text-blue-400" />
-                </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">Auto-filled from your session</p>
-            </div>
-
-            {/* Modified By - Only for Edit */}
-            {editId && (
-              <div className="relative group">
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                  <PencilSquareIcon className="w-4 h-4 mr-1 text-green-400" />
-                  Modified By (Auto)
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    name="Modified_by"
-                    value={formData.Modified_by}
-                    readOnly
-                    className="w-full bg-green-50 border-2 border-green-200 rounded-xl p-3 pl-10 text-gray-700 font-medium focus:outline-none transition-all duration-200"
-                  />
-                  <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                    <PencilSquareIcon className="w-5 h-5 text-green-400" />
-                  </div>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">Auto-filled from your session</p>
-              </div>
-            )}
-
-            {/* Address - Full Width */}
             <div className="md:col-span-2 lg:col-span-3 relative group">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <HomeIcon className="w-4 h-4 mr-1 text-gray-400" />
@@ -1872,13 +1879,7 @@ const {
                   <p className="font-medium text-gray-900">
                     {selectedMember.Created_at ? new Date(selectedMember.Created_at).toLocaleDateString('en-IN') : 'N/A'}
                   </p>
-                  <p className="text-xs text-gray-500">by {selectedMember.Created_by}</p>
-                  {selectedMember.Modified_by && (
-                    <>
-                      <p className="text-sm text-gray-600 mt-2">Modified By</p>
-                      <p className="text-xs text-gray-500">{selectedMember.Modified_by}</p>
-                    </>
-                  )}
+                
                 </div>
               </div>
             </div>

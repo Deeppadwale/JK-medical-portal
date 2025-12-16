@@ -1,66 +1,70 @@
-# from pydantic import BaseModel
-# from typing import Optional
-
-
-# class MemberReportBase(BaseModel):
-#     Member_id: Optional[int] = None
-#     Report_id: Optional[int] = None
-#     purpose: Optional[str] = None
-#     remarks: Optional[str] = None
-#     Created_by: Optional[str] = None
-#     Modified_by: Optional[str] = None
-#     uploaded_file_report_first: Optional[str] = None
-#     uploaded_file_report_second: Optional[str] = None
-#     uploaded_file_report_third: Optional[str] = None
-
-
-# class MemberReportResponse(MemberReportBase):
-#     MemberReport_id: int
-#     doc_No: int
-
-#     class Config:
-#         orm_mode = True
-
-
-
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date
 
+class DetailRowAction(BaseModel):
+    detail_id: Optional[int]
+    report_date: Optional[date]
+    Report_id: Optional[int]
+    Doctor_and_Hospital_name: Optional[str]
+    row_action: str          # add | update | delete
+    file_key: Optional[str] 
+     # file_0, file_1
+    
 
-class MemberReportDetailBase(BaseModel):
-    report_date: date
-    Report_id: int
-    Doctor_and_Hospital_name: Optional[str] = None
-    uploaded_file_report: Optional[str] = None
+class MemberReportCreate(BaseModel):
+    Member_id: int
+    Family_id: int
+    purpose: str
+    remarks: Optional[str]
+    Created_by: str
+    details: List[DetailRowAction] = []
 
+class MemberReportUpdate(BaseModel):
+    purpose: Optional[str]
+    Modified_by: Optional[str]
+    details: List[DetailRowAction] = []
 
-class MemberReportDetailResponse(MemberReportDetailBase):
+class MemberReportDetailResponse(BaseModel):
     detail_id: int
     MemberReport_id: int
+    report_date: date
+    Report_id: int
+    Doctor_and_Hospital_name: Optional[str]
+    uploaded_file_report: Optional[str]
 
     class Config:
         orm_mode = True
 
 
-class MemberReportBase(BaseModel):
-    Member_id: int
-    Family_id: int 
-    purpose: str
-    remarks: Optional[str] = None
-    Created_by: str
-    Modified_by: Optional[str] = None
 
-
-class MemberReportCreate(MemberReportBase):
-    details: List[MemberReportDetailBase] = []
-
-
-class MemberReportResponse(MemberReportBase):
+class CreateMemberResponse(BaseModel):
     MemberReport_id: int
-    Family_id: int
     doc_No: int
+    Member_id: int
+    Family_id: int
+    purpose: str
+    remarks: Optional[str]
+    Created_by: str
+    Modified_by: Optional[str]
     Created_at: date
+    
+    details: List[MemberReportDetailResponse] = []
+
+class MemberReportResponse(BaseModel):
+    MemberReport_id: int
+    doc_No: int
+    Member_id: int
+    Family_id: int
+    purpose: str
+    remarks: Optional[str]
+    Created_by: str
+    Modified_by: Optional[str]
+    Created_at: date
+    Family_Name: Optional[str]
+    Member_name: Optional[str]
+    
+    
     details: List[MemberReportDetailResponse] = []
 
     class Config:

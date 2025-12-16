@@ -40,7 +40,7 @@ export default function Navbar() {
             {/* LEFT: Logo + Menu */}
             <div className="flex items-center space-x-14">
               {/* LOGO */}
-              <Link to="/app/memberMaster" className="flex items-center space-x-3">
+              <Link to="/app/dashboard" className="flex items-center space-x-3">
                 <img
                   src={logo}
                   alt="Logo"

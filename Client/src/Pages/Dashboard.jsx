@@ -32,7 +32,7 @@ export default function Dashboard() {
       icon: UserCircle,
       color: "from-violet-500 to-purple-400",
       bgColor: "bg-gradient-to-br from-violet-50 to-purple-50",
-      path: "/app/profile",
+      path: "/app/familyMaster",
       stat: "Complete profile",
     },
   ];

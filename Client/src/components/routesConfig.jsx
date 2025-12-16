@@ -6,6 +6,7 @@ import MemberMaster from "../components/Master/MemberMaster";
 import Dashboard from "../Pages/Dashboard.jsx"
 import ReportMaster from "../components/Master/ReportMaster";
 import MemberReport from "../components/MemberReport";
+import FamilyMaster from "./familyMaster.jsx";
 
 const routes = [
   // ===== PUBLIC =====
@@ -45,6 +46,12 @@ const routes = [
 {
   path: "/app/MemberReport",
   element: MemberReport,
+  hideNavbar: false,
+},
+
+{
+  path: "/app/familyMaster",
+  element: FamilyMaster,
   hideNavbar: false,
 },
 
