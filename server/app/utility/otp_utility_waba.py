@@ -1,5 +1,34 @@
 import os
 import requests
+import random
+from datetime import datetime, timedelta
+from passlib.context import CryptContext
+import os
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def generate_otp(length: int = 6) -> str:
+    """Generate a numeric OTP of given length."""
+    return str(random.randint(10**(length-1), 10**length - 1))
+
+def build_otp_expiry(minutes: int = 1) -> datetime:
+    """Return UTC datetime after 'minutes' for OTP expiry."""
+    return datetime.utcnow() + timedelta(minutes=minutes)
+
+def hash_otp(otp: str) -> str:
+    """Hash the OTP using bcrypt."""
+    return pwd_context.hash(otp)
+
+def verify_otp_hash(plain_otp: str, hashed_otp: str) -> bool:
+    """Verify a plain OTP against a hashed OTP."""
+    return pwd_context.verify(plain_otp, hashed_otp)
+
+
+
+
+
+
+
 
 WHATSAPP_TOKEN = os.getenv("WHATSAPP_TOKEN")
 WHATSAPP_PHONE_NUMBER_ID = os.getenv("WHATSAPP_PHONE_NUMBER_ID")

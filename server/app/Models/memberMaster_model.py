@@ -20,7 +20,7 @@ class MemberMaster(Base):
     blood_group = Column(NVARCHAR(10), nullable=True)
     date_of_birth = Column(Date, nullable=True)
 
-    Family_id = Column(Integer, ForeignKey("FamilyMaster.Family_id"), nullable=False)
+    Family_id = Column(Integer, ForeignKey("FamilyMasterMain.Family_id"), nullable=False)
 
     Created_by = Column(NVARCHAR(50), nullable=False)
     Modified_by = Column(NVARCHAR(50), nullable=True)

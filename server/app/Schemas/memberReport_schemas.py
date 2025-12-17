@@ -7,9 +7,9 @@ class DetailRowAction(BaseModel):
     report_date: Optional[date]
     Report_id: Optional[int]
     Doctor_and_Hospital_name: Optional[str]
-    row_action: str          # add | update | delete
+    row_action: str    
     file_key: Optional[str] 
-     # file_0, file_1
+  
     
 
 class MemberReportCreate(BaseModel):
