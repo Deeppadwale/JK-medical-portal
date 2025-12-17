@@ -1471,7 +1471,7 @@ const {
             <div className="relative group">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <UserCircleIcon className="w-4 h-4 mr-1 text-gray-400" />
-                 Family Member Names+  <span className="text-red-500 ml-1">*</span>
+                 Family Member Names <span className="text-red-500 ml-1">*</span>
               </label>
               <div className="relative">
                 <input
@@ -1799,21 +1799,11 @@ const {
           <div className="pt-6 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <div className="flex items-center text-sm text-gray-600">
-                <DocumentTextIcon className="w-5 h-5 text-blue-500 mr-2" />
-                <span>Fields marked with * are required</span>
+                       
               </div>
               
               <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={handleModalClose}
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={isAdding || isUpdating}
-                >
-                  <XCircleIcon className="w-5 h-5 mr-2" />
-                  Cancel
-                </button>
-                
+                               
                 <button
                   type="submit"
                   className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 font-medium shadow-md hover:shadow-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1839,6 +1829,15 @@ const {
                       )}
                     </>
                   )}
+                </button>
+                 <button
+                  type="button"
+                  onClick={handleModalClose}
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:border-red-400 hover:bg-red-50 hover:text-red-700 transition-all duration-200 font-medium flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isAdding || isUpdating}
+                >
+                  <XCircleIcon className="w-5 h-5 mr-2" />
+                  Cancel
                 </button>
               </div>
             </div>

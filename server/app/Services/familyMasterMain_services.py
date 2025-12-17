@@ -3,8 +3,6 @@ from sqlalchemy.future import select
 from app.Models.FamilyMasterMain_model import FamilyMasterMain
 from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, LoginSchema
 
-
-
 async def verify_user(db: AsyncSession, login_data: LoginSchema):
     result = await db.execute(
         select(FamilyMasterMain).where(FamilyMasterMain.User_Name == login_data.User_Name)

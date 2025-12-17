@@ -13,4 +13,7 @@ class FamilyMasterMain(Base):
     Mobile = Column(NVARCHAR(500), nullable=True)  
     User_Name = Column(NVARCHAR(50), nullable=False)
     User_Password = Column(NVARCHAR(200), nullable=False)
-    User_Type = Column(CHAR(1), nullable=False) 
+    User_Type = Column(CHAR(1), nullable=False)
+    Created_by = Column(NVARCHAR(50), nullable=False)
+    Modified_by = Column(NVARCHAR(50), nullable=True)
+

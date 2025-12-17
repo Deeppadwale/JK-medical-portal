@@ -617,7 +617,7 @@ function MemberReport() {
                                     value={formData.purpose} 
                                     onChange={handleInputChange} 
                                     placeholder="e.g., Annual Checkup"
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300" 
+                                      className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
                                     
                                 />
                             </div>
@@ -637,7 +637,7 @@ function MemberReport() {
                                     value={formData.remarks} 
                                     onChange={handleInputChange} 
                                     rows="2" 
-                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300 resize-none" 
+                                    Remarks  className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
                                     placeholder="Additional notes, observations, or comments about this report..."
                                 />
                             </div>

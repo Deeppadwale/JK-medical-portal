@@ -1,331 +1,7 @@
-// import { useState } from "react";
-// import TableUtility from "../common/TableUtility/TableUtility";
-// import Modal from "../common/Modal/Modal";
-// import CreateNewButton from "../common/Buttons/AddButton";
-
-// import {
-//   PencilSquareIcon,
-//   PhoneIcon,
-//   PlusIcon,
-//   MinusIcon,
-// } from "@heroicons/react/24/outline";
-
-// import { Trash2, Loader2, Save } from "lucide-react";
-
-// import {
-//   useGetFamilyMastersQuery,
-//   useAddFamilyMasterMutation,
-//   useUpdateFamilyMasterMutation,
-//   useDeleteFamilyMasterMutation,
-// } from "../services/familyMasterApi";
-
-// /* ============================================================
-//    FAMILY MASTER MAIN
-// ============================================================ */
-// function FamilyMasterMain() {
-//   /* ================= STATE ================= */
-//   const [isModalOpen, setIsModalOpen] = useState(false);
-//   const [editId, setEditId] = useState(null);
-
-//   const [formData, setFormData] = useState({
-//     Family_Name: "",
-//     Family_Address: "",
-//     Email_Id: "",
-//     MobileNumbers: [""],
-//     User_Name: "",
-//     User_Password: "",
-//     User_Type: "A",
-//   });
-
-//   /* ================= API ================= */
-//   const { data = [], isLoading, isError } = useGetFamilyMastersQuery();
-//   const [addFamily, { isLoading: isAdding }] = useAddFamilyMasterMutation();
-//   const [updateFamily, { isLoading: isUpdating }] = useUpdateFamilyMasterMutation();
-//   const [deleteFamily] = useDeleteFamilyMasterMutation();
-
-//   /* ================= HELPERS ================= */
-//   const resetForm = () => {
-//     setFormData({
-//       Family_Name: "",
-//       Family_Address: "",
-//       Email_Id: "",
-//       MobileNumbers: [""],
-//       User_Name: "",
-//       User_Password: "",
-//       User_Type: "A",
-//     });
-//     setEditId(null);
-//   };
-
-//   /* ================= HANDLERS ================= */
-//   const handleAddNew = () => {
-//     resetForm();
-//     setIsModalOpen(true);
-//   };
-
-//   const handleEdit = (row) => {
-//     setEditId(row.Family_id);
-
-//     setFormData({
-//       Family_Name: row.Family_Name || "",
-//       Family_Address: row.Family_Address || "",
-//       Email_Id: row.Email_Id || "",
-//       MobileNumbers: row.Mobile ? row.Mobile.split(",").filter(Boolean) : [""],
-//       User_Name: row.User_Name || "",
-//       User_Password: "",
-//       User_Type: row.User_Type || "A",
-//     });
-
-//     setIsModalOpen(true);
-//   };
-
-//   const handleDelete = async (id) => {
-//     if (!window.confirm("Are you sure you want to delete?")) return;
-//     await deleteFamily(id);
-//   };
-
-//   const handleInputChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData((p) => ({ ...p, [name]: value }));
-//   };
-
-//   /* ================= MOBILE HANDLERS ================= */
-//   const handleMobileChange = (index, value) => {
-//     const updated = [...formData.MobileNumbers];
-//     updated[index] = value.replace(/\D/g, "").slice(0, 10);
-//     setFormData((p) => ({ ...p, MobileNumbers: updated }));
-//   };
-
-//   const addMobileField = () => {
-//     setFormData((p) => ({ ...p, MobileNumbers: [...p.MobileNumbers, ""] }));
-//   };
-
-//   const removeMobileField = (index) => {
-//     setFormData((p) => ({
-//       ...p,
-//       MobileNumbers: p.MobileNumbers.filter((_, i) => i !== index),
-//     }));
-//   };
-
-//   /* ================= SUBMIT ================= */
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-
-//     // Filter valid 10-digit mobile numbers
-//     const filteredMobiles = formData.MobileNumbers.map(m => m.trim()).filter(m => m.length === 10);
-
-//     // Collect all existing mobiles except the current editing record
-//     const allExistingMobiles = data
-//       .filter(f => f.Family_id !== editId)
-//       .flatMap(f => (f.Mobile ? f.Mobile.split(",") : []))
-//       .map(m => m.trim());
-
-//     // Find duplicates
-//     const duplicateNumbers = filteredMobiles.filter(m => allExistingMobiles.includes(m));
-
-//     if (duplicateNumbers.length > 0) {
-//       alert(`One or more mobile numbers already exist in other records: ${duplicateNumbers.join(", ")}`);
-//       return;
-//     }
-
-//     const payload = {
-//       Family_Name: formData.Family_Name,
-//       Family_Address: formData.Family_Address,
-//       Email_Id: formData.Email_Id,
-//       Mobile: filteredMobiles.join(","), // backend format
-//       User_Name: formData.User_Name,
-//       User_Password: formData.User_Password,
-//       User_Type: formData.User_Type,
-//     };
-
-//     try {
-//       if (editId) {
-//         await updateFamily({ id: editId, ...payload }).unwrap();
-//       } else {
-//         await addFamily(payload).unwrap();
-//       }
-
-//       setIsModalOpen(false);
-//       resetForm();
-//     } catch (err) {
-//       console.error(err);
-//       alert("Operation failed");
-//     }
-//   };
-
-//   /* ================= TABLE ================= */
-//   const columns = [
-//     { header: "ID", accessor: "Family_id" },
-//     { header: "Family Name", accessor: "Family_Name" },
-//     { header: "Mobile", accessor: "Mobile" },
-//     { header: "Email", accessor: "Email_Id" },
-//     {
-//       header: "Action",
-//       accessor: "action",
-//       isAction: true,
-//       actionRenderer: (row) => (
-//         <div className="flex justify-center gap-2">
-//           <button
-//             onClick={() => handleEdit(row)}
-//             className="p-2 bg-blue-50 rounded"
-//           >
-//             <PencilSquareIcon className="h-5 w-5 text-blue-600" />
-//           </button>
-//           <button
-//             onClick={() => handleDelete(row.Family_id)}
-//             className="p-2 bg-red-50 rounded"
-//           >
-//             <Trash2 className="h-5 w-5 text-red-600" />
-//           </button>
-//         </div>
-//       ),
-//     },
-//   ];
-
-//   /* ================= RENDER ================= */
-//   if (isLoading) return <Loader2 className="h-10 w-10 animate-spin mx-auto mt-20" />;
-//   if (isError) return <div className="text-center text-red-600">Failed to load</div>;
-
-//   return (
-//     <>
-//       <TableUtility
-//         title="Family Master Main"
-//         columns={columns}
-//         data={Array.isArray(data) ? data : []}
-//         headerContent={<CreateNewButton onClick={handleAddNew} />}
-//       />
-
-//       {/* ================= MODAL ================= */}
-//       <Modal
-//         isOpen={isModalOpen}
-//         onClose={() => setIsModalOpen(false)}
-//         width="900px"
-//       >
-//         <form onSubmit={handleSubmit} className="space-y-6">
-//           <h2 className="text-2xl font-bold">{editId ? "Edit Family" : "Add Family"}</h2>
-
-//           <input
-//             name="Family_Name"
-//             value={formData.Family_Name}
-//             onChange={handleInputChange}
-//             placeholder="Family Name"
-//             className="w-full border p-3 rounded"
-//             required
-//           />
-
-//           <textarea
-//             name="Family_Address"
-//             value={formData.Family_Address}
-//             onChange={handleInputChange}
-//             placeholder="Address"
-//             className="w-full border p-3 rounded"
-//           />
-
-//           {/* MOBILE NUMBERS */}
-//           <div className="space-y-2">
-//             <label className="font-semibold flex items-center gap-2">
-//               <PhoneIcon className="h-5 w-5 text-green-600" />
-//               Mobile Numbers
-//             </label>
-
-//             {formData.MobileNumbers.map((mobile, index) => (
-//               <div key={index} className="flex gap-2">
-//                 <input
-//                   value={mobile}
-//                   onChange={(e) => handleMobileChange(index, e.target.value)}
-//                   className="flex-1 border p-2 rounded"
-//                   placeholder="10 digit mobile"
-//                 />
-//                 {formData.MobileNumbers.length > 1 && (
-//                   <button
-//                     type="button"
-//                     onClick={() => removeMobileField(index)}
-//                     className="p-2 bg-red-100 rounded"
-//                   >
-//                     <MinusIcon className="h-4 w-4 text-red-600" />
-//                   </button>
-//                 )}
-//               </div>
-//             ))}
-
-//             <button
-//               type="button"
-//               onClick={addMobileField}
-//               className="flex items-center gap-1 text-blue-600 text-sm"
-//             >
-//               <PlusIcon className="h-4 w-4" />
-//               Add Mobile
-//             </button>
-//           </div>
-
-//           <input
-//             name="Email_Id"
-//             value={formData.Email_Id}
-//             onChange={handleInputChange}
-//             placeholder="Email"
-//             className="w-full border p-3 rounded"
-//           />
-
-//           <input
-//             name="User_Name"
-//             value={formData.User_Name}
-//             onChange={handleInputChange}
-//             placeholder="Username"
-//             className="w-full border p-3 rounded"
-//             required
-//           />
-
-//           <input
-//             name="User_Password"
-//             value={formData.User_Password}
-//             onChange={handleInputChange}
-//             placeholder="Password"
-//             type="password"
-//             className="w-full border p-3 rounded"
-//             required={!editId}
-//           />
-
-//           <select
-//             name="User_Type"
-//             value={formData.User_Type}
-//             onChange={handleInputChange}
-//             className="w-full border p-3 rounded"
-//           >
-//             <option value="A">Admin</option>
-//             <option value="U">User</option>
-//           </select>
-
-//           <div className="flex justify-end gap-3 pt-4">
-//             <button
-//               type="button"
-//               onClick={() => setIsModalOpen(false)}
-//               className="px-6 py-2 border rounded"
-//             >
-//               Cancel
-//             </button>
-//             <button
-//               type="submit"
-//               className="px-6 py-2 bg-blue-600 text-white rounded flex items-center gap-2"
-//               disabled={isAdding || isUpdating}
-//             >
-//               <Save className="h-4 w-4" />
-//               {editId ? "Update" : "Save"}
-//             </button>
-//           </div>
-//         </form>
-//       </Modal>
-//     </>
-//   );
-// }
-
-// export default FamilyMasterMain;
-
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TableUtility from "../common/TableUtility/TableUtility";
 import Modal from "../common/Modal/Modal";
 import CreateNewButton from "../common/Buttons/AddButton";
-
 import {
   PencilSquareIcon,
   PhoneIcon,
@@ -341,10 +17,14 @@ import {
   ShieldCheckIcon,
   UserGroupIcon,
   XCircleIcon,
-  CheckCircleIcon
+  CheckCircleIcon,
+  CalendarDaysIcon,
+  ClockIcon,
+  UserIcon,
+  PencilIcon
 } from "@heroicons/react/24/outline";
 
-import { Trash2, Loader2, Save, Eye, Shield, Users, Mail, MapPin } from "lucide-react";
+import { Trash2, Loader2, Save, Eye, Shield, Users, Mail, MapPin, History } from "lucide-react";
 
 import {
   useGetFamilyMastersQuery,
@@ -353,16 +33,14 @@ import {
   useDeleteFamilyMasterMutation,
 } from "../services/familyMasterApi";
 
-/* ============================================================
-   FAMILY MASTER MAIN
-============================================================ */
 function FamilyMasterMain() {
-  /* ================= STATE ================= */
+ 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [selectedFamily, setSelectedFamily] = useState(null);
   const [editId, setEditId] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [currentUser, setCurrentUser] = useState("");
   
   const [formData, setFormData] = useState({
     Family_Name: "",
@@ -372,6 +50,9 @@ function FamilyMasterMain() {
     User_Name: "",
     User_Password: "",
     User_Type: "A",
+    Created_by: "",
+    Modified_by: "",
+    Created_at: "",
   });
 
   const [notification, setNotification] = useState({
@@ -383,13 +64,29 @@ function FamilyMasterMain() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
   const [deleteIdToConfirm, setDeleteIdToConfirm] = useState(null);
 
-  /* ================= API ================= */
   const { data = [], isLoading, isError } = useGetFamilyMastersQuery();
   const [addFamily, { isLoading: isAdding }] = useAddFamilyMasterMutation();
   const [updateFamily, { isLoading: isUpdating }] = useUpdateFamilyMasterMutation();
   const [deleteFamily, { isLoading: isDeleting }] = useDeleteFamilyMasterMutation();
 
-  /* ================= NOTIFICATION ================= */
+
+  useEffect(() => {
+    const getUserFromSessionStorage = () => {
+      try {
+        const userName = sessionStorage.getItem("user_name");
+        console.log("Current user from sessionStorage:", userName);
+        setCurrentUser(userName || "System");
+        return userName || "System";
+      } catch (error) {
+        console.error("Error getting user from sessionStorage:", error);
+        setCurrentUser("System");
+        return "System";
+      }
+    };
+
+    getUserFromSessionStorage();
+  }, []);
+
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
@@ -397,8 +94,9 @@ function FamilyMasterMain() {
     }, 3000);
   };
 
-  /* ================= HELPERS ================= */
   const resetForm = () => {
+    const currentUserName = currentUser || "System";
+    
     setFormData({
       Family_Name: "",
       Family_Address: "",
@@ -407,12 +105,14 @@ function FamilyMasterMain() {
       User_Name: "",
       User_Password: "",
       User_Type: "A",
+      Created_by: currentUserName, 
+      Modified_by: "", 
+      Created_at: new Date().toISOString().split("T")[0], 
     });
     setEditId(null);
     setShowPassword(false);
   };
 
-  /* ================= HANDLERS ================= */
   const handleAddNew = () => {
     resetForm();
     setIsModalOpen(true);
@@ -424,6 +124,8 @@ function FamilyMasterMain() {
   };
 
   const handleEdit = (row) => {
+    const currentUserName = currentUser || "System";
+    
     setEditId(row.Family_id);
 
     setFormData({
@@ -432,8 +134,13 @@ function FamilyMasterMain() {
       Email_Id: row.Email_Id || "",
       MobileNumbers: row.Mobile ? row.Mobile.split(",").filter(Boolean) : [""],
       User_Name: row.User_Name || "",
-      User_Password: row.User_Password || "",
+      User_Password: row.User_Password || "", 
       User_Type: row.User_Type || "A",
+      Created_by: row.Created_by || currentUserName,
+      Modified_by: currentUserName, 
+      Created_at: row.Created_at ? 
+        new Date(row.Created_at).toISOString().split("T")[0] : 
+        new Date().toISOString().split("T")[0],
     });
 
     setShowPassword(false);
@@ -469,7 +176,7 @@ function FamilyMasterMain() {
     setShowPassword(!showPassword);
   };
 
-  /* ================= MOBILE HANDLERS ================= */
+
   const handleMobileChange = (index, value) => {
     const updated = [...formData.MobileNumbers];
     updated[index] = value.replace(/\D/g, "").slice(0, 10);
@@ -489,7 +196,6 @@ function FamilyMasterMain() {
     }
   };
 
-  /* ================= VALIDATION ================= */
   const isValidMobile = (mobile) => {
     return /^[6-9]\d{9}$/.test(mobile);
   };
@@ -499,11 +205,11 @@ function FamilyMasterMain() {
     return uniqueMobiles.size !== mobiles.length;
   };
 
-  /* ================= SUBMIT ================= */
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation
+    
     if (!formData.Family_Name.trim()) {
       showNotification("Family Name is required!", "error");
       return;
@@ -519,7 +225,7 @@ function FamilyMasterMain() {
       return;
     }
 
-    // Filter and validate mobile numbers
+
     const validMobiles = formData.MobileNumbers
       .map(m => m.trim())
       .filter(m => m !== "");
@@ -529,20 +235,20 @@ function FamilyMasterMain() {
       return;
     }
 
-    // Validate each mobile number
+
     const invalidMobiles = validMobiles.filter(m => !isValidMobile(m));
     if (invalidMobiles.length > 0) {
       showNotification(`Invalid mobile numbers: ${invalidMobiles.join(", ")}. Must be 10 digits starting with 6-9.`, "error");
       return;
     }
 
-    // Check for duplicates in form
+   
     if (hasDuplicateMobiles(validMobiles)) {
       showNotification("Duplicate mobile numbers found in the form!", "error");
       return;
     }
 
-    // Check for duplicates in database
+  
     const allExistingMobiles = data
       .filter(f => f.Family_id !== editId)
       .flatMap(f => (f.Mobile ? f.Mobile.split(",") : []))
@@ -554,6 +260,9 @@ function FamilyMasterMain() {
       return;
     }
 
+    const currentUserName = currentUser || "System";
+    const currentDate = new Date().toISOString();
+
     const payload = {
       Family_Name: formData.Family_Name,
       Family_Address: formData.Family_Address,
@@ -562,6 +271,10 @@ function FamilyMasterMain() {
       User_Name: formData.User_Name,
       User_Password: formData.User_Password || undefined,
       User_Type: formData.User_Type,
+      Created_by: editId ? formData.Created_by : currentUserName,
+      Modified_by: editId ? currentUserName : null,
+      Created_at: editId ? formData.Created_at : currentDate,
+      Modified_at: editId ? currentDate : null,
     };
 
     try {
@@ -620,6 +333,16 @@ function FamilyMasterMain() {
         <div className="flex items-center">
           <Mail className="h-4 w-4 mr-2 text-gray-400" />
           <span className="text-gray-700 truncate max-w-[200px]">{row.Email_Id || "N/A"}</span>
+        </div>
+      )
+    },
+    {
+      header: "Created By",
+      accessor: "Created_by",
+      cell: (row) => (
+        <div className="flex items-center">
+          <UserIcon className="h-4 w-4 mr-2 text-gray-400" />
+          <span className="text-gray-700">{row.Created_by || "System"}</span>
         </div>
       )
     },
@@ -714,6 +437,18 @@ function FamilyMasterMain() {
         </div>
       )}
 
+      {/* Current User Badge */}
+      {currentUser && (
+        <div className="fixed top-4 left-4 z-40">
+          <div className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg shadow-md">
+            <div className="flex items-center gap-2">
+              <UserCircleIcon className="h-4 w-4" />
+              <span className="text-sm font-medium">Logged in as: {currentUser}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="max-w-full">
         <TableUtility
@@ -747,24 +482,34 @@ function FamilyMasterMain() {
             <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-indigo-200 rounded-full opacity-20"></div>
 
             <div className="relative z-10">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  {editId ? (
-                    <PencilSquareIcon className="w-6 h-6 text-blue-600" />
-                  ) : (
-                    <UserGroupIcon className="w-6 h-6 text-green-600" />
-                  )}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-white rounded-lg shadow-sm">
+                    {editId ? (
+                      <PencilSquareIcon className="w-6 h-6 text-blue-600" />
+                    ) : (
+                      <UserGroupIcon className="w-6 h-6 text-green-600" />
+                    )}
+                  </div>
+
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-800">
+                      {editId ? "Update Family Details" : "Add New Family"}
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {editId
+                        ? "Update the family information below"
+                        : "Fill in the family information below"}
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-800">
-                    {editId ? "Update Family Details" : "Add New Family"}
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    {editId
-                      ? "Update the family information below"
-                      : "Fill in the family information below"}
-                  </p>
+                {/* Current User Badge */}
+                <div className="px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="h-4 w-4" />
+                    <span>User: {currentUser}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -843,7 +588,7 @@ function FamilyMasterMain() {
                             ? "border-green-300 focus:border-green-500 focus:ring-green-500/20"
                             : "border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 hover:border-blue-300"
                         }`}
-                      
+                        placeholder="9876543210"
                         maxLength="10"
                       />
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center">
@@ -985,7 +730,7 @@ function FamilyMasterMain() {
               </div>
             </div>
 
-            {/* User Type */}
+
             <div className="relative group">
               <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                 <Shield className="w-4 h-4 mr-1 text-blue-500" />
@@ -1145,6 +890,43 @@ function FamilyMasterMain() {
                       <p className="text-gray-700">{selectedFamily.Family_Address || 'No address provided'}</p>
                     </div>
                   </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Audit Information */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                <History className="w-5 h-5 mr-2 text-gray-500" />
+                Audit Information
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <UserIcon className="h-4 w-4 text-green-500 mr-2" />
+                    <p className="text-sm font-medium text-gray-700">Created By</p>
+                  </div>
+                  <p className="text-gray-900 font-medium">{selectedFamily.Created_by || 'System'}</p>
+                </div>
+                
+                {selectedFamily.Modified_by && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center mb-2">
+                      <PencilIcon className="h-4 w-4 text-blue-500 mr-2" />
+                      <p className="text-sm font-medium text-gray-700">Last Modified By</p>
+                    </div>
+                    <p className="text-gray-900 font-medium">{selectedFamily.Modified_by}</p>
+                  </div>
+                )}
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <CalendarDaysIcon className="h-4 w-4 text-purple-500 mr-2" />
+                    <p className="text-sm font-medium text-gray-700">Created Date</p>
+                  </div>
+                  <p className="text-gray-900 font-medium">
+                    {selectedFamily.Created_at ? new Date(selectedFamily.Created_at).toLocaleDateString('en-IN') : 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>

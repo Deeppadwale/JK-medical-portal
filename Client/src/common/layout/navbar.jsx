@@ -16,8 +16,11 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isFamilyMaster = location.pathname === "/app/familyMaster";
+
   const navItems = [
     { label: "Dashbord", path: "/app/dashboard", icon: Users },
+    { label: "Family Members", path: "/app/member-list", icon: Users },
     { label: "Member Master", path: "/app/member-master", icon: Users },
     { label: "Report Master", path: "/app/reportMaster", icon: FileText },
     { label: "Member Reports", path: "/app/MemberReport", icon: Activity },
@@ -37,9 +40,8 @@ export default function Navbar() {
         <div className="max-w-8xl mx-auto px-6">
           <div className="flex items-center justify-between h-20">
 
-            {/* LEFT: Logo + Menu */}
-            <div className="flex items-center space-x-14">
-              {/* LOGO */}
+            {/* LEFT: Logo */}
+            <div className="flex items-center space-x-6">
               <Link to="/app/dashboard" className="flex items-center space-x-3">
                 <img
                   src={logo}
@@ -48,32 +50,34 @@ export default function Navbar() {
                 />
               </Link>
 
-              {/* DESKTOP MENU */}
-              <nav className="hidden lg:flex items-center space-x-4">
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = location.pathname === item.path;
+              {/* DESKTOP MENU (HIDE FOR FAMILY MASTER) */}
+              {!isFamilyMaster && (
+                <nav className="hidden lg:flex items-center space-x-4">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = location.pathname === item.path;
 
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all
-                        ${
-                          isActive
-                            ? "bg-gray-100 text-gray-900 shadow-sm"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                        }`}
-                    >
-                      <Icon
-                        size={18}
-                        className={isActive ? "text-red-500" : "text-gray-500"}
-                      />
-                      <span className="font-medium">{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </nav>
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all
+                          ${
+                            isActive
+                              ? "bg-gray-100 text-gray-900 shadow-sm"
+                              : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          }`}
+                      >
+                        <Icon
+                          size={18}
+                          className={isActive ? "text-red-500" : "text-gray-500"}
+                        />
+                        <span className="font-medium">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              )}
             </div>
 
             {/* RIGHT */}
@@ -81,25 +85,27 @@ export default function Navbar() {
               {/* Logout */}
               <button
                 onClick={handleLogout}
-                className="hidden lg:flex items-center space-x-2 px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 transition"
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-red-600 hover:bg-red-50 transition"
               >
                 <LogOut size={18} />
                 <span className="font-medium">Logout</span>
               </button>
 
-              {/* Mobile Toggle */}
-              <button
-                onClick={() => setOpen(!open)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
-                {open ? <X size={26} /> : <Menu size={26} />}
-              </button>
+              {/* Mobile Toggle (HIDE FOR FAMILY MASTER) */}
+              {!isFamilyMaster && (
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+                >
+                  {open ? <X size={26} /> : <Menu size={26} />}
+                </button>
+              )}
             </div>
           </div>
         </div>
 
-        {/* MOBILE MENU */}
-        {open && (
+        {/* MOBILE MENU (HIDE FOR FAMILY MASTER) */}
+        {!isFamilyMaster && open && (
           <div className="lg:hidden border-t bg-white animate-slideDown">
             <div className="px-4 py-3 space-y-1">
               {navItems.map((item) => {
@@ -123,15 +129,6 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-
-              {/* Mobile Logout */}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50"
-              >
-                <LogOut size={20} />
-                <span className="font-medium">Logout</span>
-              </button>
             </div>
           </div>
         )}

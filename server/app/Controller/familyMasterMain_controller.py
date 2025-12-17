@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
-
 from app.Models.database import get_db
 from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, FamilyResponseSchema, LoginSchema
 from app.Services.familyMasterMain_services import (
@@ -17,8 +16,6 @@ router = APIRouter(
     prefix="/familiesMain",
     tags=["Family Master Main"]
 )
-
-
 
 @router.post("/login")
 async def login_user(login_data: LoginSchema, db: AsyncSession = Depends(get_db)):
@@ -42,18 +39,13 @@ async def create_family_api(
 ):
     return await create_family(db, data)
 
-# =========================
-# Get All
-# =========================
 @router.get("/", response_model=List[FamilyResponseSchema])
 async def get_all_families_api(
     db: AsyncSession = Depends(get_db)
 ):
     return await get_all_families(db)
 
-# =========================
-# Get By ID
-# =========================
+
 @router.get("/{family_id}", response_model=FamilyResponseSchema)
 async def get_family_by_id_api(
     family_id: int,
@@ -64,9 +56,7 @@ async def get_family_by_id_api(
         raise HTTPException(status_code=404, detail="Family not found")
     return family
 
-# =========================
-# Update
-# =========================
+
 @router.put("/{family_id}", response_model=FamilyResponseSchema)
 async def update_family_api(
     family_id: int,
@@ -78,9 +68,7 @@ async def update_family_api(
         raise HTTPException(status_code=404, detail="Family not found")
     return family
 
-# =========================
-# Delete
-# =========================
+
 @router.delete("/{family_id}")
 async def delete_family_api(
     family_id: int,
@@ -90,3 +78,4 @@ async def delete_family_api(
     if not success:
         raise HTTPException(status_code=404, detail="Family not found")
     return {"message": "Family deleted successfully"}
+      

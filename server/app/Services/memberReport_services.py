@@ -6,7 +6,10 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from app.Models.memberReport_model import MemberReport, MemberReportDetail
 from app.Schemas.memberReport_schemas import MemberReportDetailResponse, MemberReportResponse
+from sqlalchemy import text 
+from sqlalchemy import text
 
+from sqlalchemy.ext.asyncio import AsyncSession
 UPLOAD_DIR = "upload/medical_report"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
@@ -163,11 +166,26 @@ async def delete_report(db: AsyncSession, report_id: int):
 
 
 
+# async def get_all_reports(db: AsyncSession):
+#     result = await db.execute(
+#         select(MemberReport).options(selectinload(MemberReport.details))
+#     )
+#     return result.scalars().all()
+
+
 async def get_all_reports(db: AsyncSession):
     result = await db.execute(
-        select(MemberReport).options(selectinload(MemberReport.details))
+        select(MemberReport)
+        .options(selectinload(MemberReport.details))
+        .order_by(MemberReport.MemberReport_id.desc())
     )
-    return result.scalars().all()
+    
+    reports = result.scalars().all()
+    
+    for report in reports:
+        report.details.sort(key=lambda d: d.detail_id, reverse=True)
+    
+    return reports
 
 
 async def get_report_by_id(db: AsyncSession, report_id: int):
@@ -180,10 +198,6 @@ async def get_report_by_id(db: AsyncSession, report_id: int):
     return result.scalars().first()
 
 
-from sqlalchemy import text
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 async def get_reports_by_family(db: AsyncSession, family_id: int):
     query = text("""

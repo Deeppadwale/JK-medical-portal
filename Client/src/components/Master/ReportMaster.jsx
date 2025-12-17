@@ -254,39 +254,15 @@ function ReportMaster() {
                 </div>
             )
         },
-        {
-            header: "Created By",
-            accessor: "Created_by",
-            cell: (row) => (
-                <div className="flex items-center text-gray-700">
-                    <User className="h-4 w-4 mr-2 text-gray-400" />
-                    {row.Created_by || "System"}
-                </div>
-            )
-        },
-        {
-            header: "Created Date",
-            accessor: "Created_at",
-            cell: (row) => (
-                <div className="flex items-center text-gray-700">
-                    <CalendarDaysIcon className="h-4 w-4 mr-2 text-gray-400" />
-                    {row.Created_at ? new Date(row.Created_at).toLocaleDateString('en-IN') : "N/A"}
-                </div>
-            )
-        },
+    
+       
         {
             header: "Actions",
             accessor: "action",
             isAction: true,
             actionRenderer: (row) => (
                 <div className="flex justify-center space-x-2">
-                    <button
-                        onClick={() => handleViewReport(row)}
-                        className="p-2.5 hover:bg-green-50 rounded-lg transition-all duration-200"
-                        title="View Details"
-                    >
-                        <Eye className="h-5 w-5 text-green-600" />
-                    </button>
+                   
                     <button
                         onClick={() => handleEdit(row)}
                         className="p-2.5 hover:bg-blue-50 rounded-lg transition-all duration-200"
@@ -481,75 +457,6 @@ function ReportMaster() {
                             </div>
                         </div>
 
-                        {/* Created By */}
-                        {/* <div className="relative group">
-                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                <User className="w-4 h-4 mr-1 text-gray-400" />
-                                Created By
-                            </label>
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    name="Created_by"
-                                    value={formData.Created_by}
-                                    readOnly
-                                    className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-3 pl-10 text-gray-700 font-medium focus:outline-none transition-all duration-200"
-                                />
-                                <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                    <User className="w-5 h-5 text-gray-400" />
-                                </div>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-2">User who created this report</p>
-                        </div> */}
-
-                        {/* Modified By (Only for Edit) */}
-                        {editId && (
-                            <div className="relative group">
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                    <History className="w-4 h-4 mr-1 text-gray-400" />
-                                    Modified By
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        name="Modified_by"
-                                        value={formData.Modified_by}
-                                        readOnly
-                                        className="w-full bg-gray-50 border-2 border-gray-200 rounded-xl p-3 pl-10 text-gray-700 font-medium focus:outline-none transition-all duration-200"
-                                    />
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                        <History className="w-5 h-5 text-gray-400" />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">User who last modified</p>
-                            </div>
-                        )}
-
-                        {/* Created Date */}
-                        {editId && (
-                            <div className="relative group md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                    <CalendarDaysIcon className="w-4 h-4 mr-1 text-green-500" />
-                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded mr-2">
-                                        Created
-                                    </span>
-                                    Creation Date
-                                </label>
-                                <div className="relative">
-                                    <input
-                                        type="date"
-                                        name="Created_at"
-                                        value={formData.Created_at}
-                                        readOnly
-                                        className="w-full bg-green-50 border-2 border-green-200 rounded-xl p-3 pl-10 text-gray-700 font-medium focus:outline-none transition-all duration-200"
-                                    />
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                                        <CalendarDaysIcon className="w-5 h-5 text-green-500" />
-                                    </div>
-                                </div>
-                                <p className="text-xs text-gray-500 mt-2">Original creation date</p>
-                            </div>
-                        )}
                     </div>
 
                     {/* Form Footer */}
@@ -595,108 +502,7 @@ function ReportMaster() {
                 </form>
             </Modal>
 
-            {/* View Report Modal */}
-            <Modal
-                isOpen={isViewModalOpen}
-                onClose={() => setIsViewModalOpen(false)}
-                title="Report Details"
-                width={"800px"}
-            >
-                {selectedReport && (
-                    <div className="space-y-6">
-                        {/* Report Info Header */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <div className="flex items-center mb-2">
-                                        <FileText className="h-8 w-8 text-blue-600 mr-3" />
-                                        <h2 className="text-2xl font-bold text-gray-900">{selectedReport.report_name}</h2>
-                                    </div>
-                                    <div className="flex items-center space-x-4">
-                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
-                                            Doc No: {selectedReport.doc_No}
-                                        </span>
-                                        <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                                            ID: {selectedReport.Report_id}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Report Information */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <User className="w-5 h-5 mr-2 text-blue-500" />
-                                    User Information
-                                </h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Created By</p>
-                                        <div className="flex items-center mt-1">
-                                            <User className="h-4 w-4 text-gray-400 mr-2" />
-                                            <p className="font-medium text-gray-900">{selectedReport.Created_by || 'System'}</p>
-                                        </div>
-                                    </div>
-                                    {selectedReport.Modified_by && (
-                                        <div>
-                                            <p className="text-sm text-gray-600">Last Modified By</p>
-                                            <div className="flex items-center mt-1">
-                                                <History className="h-4 w-4 text-gray-400 mr-2" />
-                                                <p className="font-medium text-gray-900">{selectedReport.Modified_by}</p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                                    <CalendarDaysIcon className="w-5 h-5 mr-2 text-green-500" />
-                                    Timeline
-                                </h3>
-                                <div className="space-y-3">
-                                    <div>
-                                        <p className="text-sm text-gray-600">Created Date</p>
-                                        <div className="flex items-center mt-1">
-                                            <CalendarDaysIcon className="h-4 w-4 text-gray-400 mr-2" />
-                                            <p className="font-medium text-gray-900">
-                                                {selectedReport.Created_at ? new Date(selectedReport.Created_at).toLocaleDateString('en-IN') : 'N/A'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    {selectedReport.Modified_at && (
-                                        <div>
-                                            <p className="text-sm text-gray-600">Last Modified</p>
-                                            <div className="flex items-center mt-1">
-                                                <ClockIcon className="h-4 w-4 text-gray-400 mr-2" />
-                                                <p className="font-medium text-gray-900">
-                                                    {new Date(selectedReport.Modified_at).toLocaleDateString('en-IN')}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer */}
-                        <div className="border-t border-gray-200 pt-4">
-                            <div className="flex justify-end">
-                                <button
-                                    onClick={() => setIsViewModalOpen(false)}
-                                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
-                                >
-                                    Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-
-            {/* Delete Confirmation Modal */}
+           
             <Modal
                 isOpen={showDeleteConfirmModal}
                 onClose={() => setShowDeleteConfirmModal(false)}

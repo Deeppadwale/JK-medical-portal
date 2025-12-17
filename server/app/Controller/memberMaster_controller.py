@@ -4,9 +4,7 @@ from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 import os
-
 from sqlalchemy.future import select
-
 from datetime import date
 from app.Models.database import get_db
 from app.Services.memberMaster_Services import (
@@ -19,12 +17,10 @@ from app.Services.memberMaster_Services import (
 )
 from app.Schemas.memberMaster_schemas import MemberCreate, MemberUpdate, MemberResponse
 from app.Models.memberMaster_model import MemberMaster
-
 router = APIRouter(
     prefix="/members",
     tags=["Members"]
 )
-
 
 UPLOAD_ROOT = "upload"
 PAN_FOLDER = os.path.join(UPLOAD_ROOT, "pancard")
@@ -147,7 +143,6 @@ async def update_member_by_id(
     if not db_member:
         raise HTTPException(status_code=404, detail="Member not found")
 
-
     pan_path = os.path.join(PAN_FOLDER, pan_file.filename) if pan_file else None
     adhar_path = os.path.join(ADHAR_FOLDER, adhar_file.filename) if adhar_file else None
     insurance_path = os.path.join(INSURANCE_FOLDER, insurance_file.filename) if insurance_file else None
@@ -172,7 +167,6 @@ async def update_member_by_id(
         Modified_by=Modified_by
     )
     return await update_member(db, db_member, update_data, pan_path, adhar_path, insurance_path)
-
 
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def remove_member(member_id: int, db: AsyncSession = Depends(get_db)):

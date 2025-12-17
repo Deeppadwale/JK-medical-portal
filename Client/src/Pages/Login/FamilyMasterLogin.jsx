@@ -23,6 +23,7 @@ function FamilyMasterLogin() {
     try {
       const res = await loginUser({ User_Name, User_Password }).unwrap();
       sessionStorage.setItem("family_id", res.user_id);
+      sessionStorage.setItem("user_name", User_Name); 
       navigate("/app/familyMaster");
     } catch {
       alert("Invalid username or password");
@@ -168,6 +169,7 @@ function FamilyMasterLogin() {
           </p>
         </div>
       </div>
+      
     </div>
   );
 }
