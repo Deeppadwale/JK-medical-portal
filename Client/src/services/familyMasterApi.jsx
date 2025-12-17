@@ -1,10 +1,11 @@
-// src/services/familyMasterApi.js
+// src/services/familyMasterApi.jsx
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const API_BASE_URL = import.meta.env.VITE_REACT_APP_API_BASE_URL;
 
-export const familyMasterApi = createApi({
+export const familyMasterMainApi = createApi({
   reducerPath: "familyMasterApi",
+
   baseQuery: fetchBaseQuery({
     baseUrl: API_BASE_URL,
     prepareHeaders: (headers) => {
@@ -12,69 +13,79 @@ export const familyMasterApi = createApi({
       return headers;
     },
   }),
+
   tagTypes: ["FamilyMaster"],
 
   endpoints: (builder) => ({
-
-    // =========================
-    // Get All Families
-    // =========================
+    /* =========================
+       GET ALL
+    ========================= */
     getFamilyMasters: builder.query({
-      query: () => "/families",
+      query: () => "/familiesMain",
       providesTags: ["FamilyMaster"],
     }),
 
-    // =========================
-    // Get Family by ID
-    // =========================
+    /* =========================
+       GET BY ID
+    ========================= */
     getFamilyMasterById: builder.query({
-      query: (id) => `/families/${id}`,
-      providesTags: (result, error, id) => [
-        { type: "FamilyMaster", id },
-      ],
+      query: (id) => `/familiesMain/${id}`,
+      providesTags: (r, e, id) => [{ type: "FamilyMaster", id }],
     }),
 
-    // =========================
-    // Create Family
-    // Payload supports:
-    // MobileNumbers: string[]
-    // =========================
+    /* =========================
+       CREATE
+    ========================= */
     addFamilyMaster: builder.mutation({
-      query: (family) => ({
-        url: "/families",
-        method: "POST",
-        body: {
-          ...family,
-          MobileNumbers: family.MobileNumbers || [], // ✅ ensure array
-        },
-      }),
+      query: (family) => {
+        const mobile =
+          Array.isArray(family.MobileNumbers)
+            ? family.MobileNumbers.filter(Boolean).join(",")
+            : family.Mobile || "";
+
+        return {
+          url: "/familiesMain",
+          method: "POST",
+          body: {
+            ...family,
+            Mobile: mobile, // ✅ SAFE
+          },
+        };
+      },
       invalidatesTags: ["FamilyMaster"],
     }),
 
-    // =========================
-    // Update Family
-    // =========================
+    /* =========================
+       UPDATE
+    ========================= */
     updateFamilyMaster: builder.mutation({
-      query: ({ id, ...family }) => ({
-        url: `/families/${id}`,
-        method: "PUT",
-        body: {
-          ...family,
-          MobileNumbers: family.MobileNumbers || [], // ✅ ensure array
-        },
-      }),
-      invalidatesTags: (result, error, { id }) => [
+      query: ({ id, ...family }) => {
+        const mobile =
+          Array.isArray(family.MobileNumbers)
+            ? family.MobileNumbers.filter(Boolean).join(",")
+            : family.Mobile || "";
+
+        return {
+          url: `/familiesMain/${id}`,
+          method: "PUT",
+          body: {
+            ...family,
+            Mobile: mobile, // ✅ SAFE
+          },
+        };
+      },
+      invalidatesTags: (r, e, { id }) => [
         { type: "FamilyMaster", id },
         "FamilyMaster",
       ],
     }),
 
-    // =========================
-    // Delete Family
-    // =========================
+    /* =========================
+       DELETE
+    ========================= */
     deleteFamilyMaster: builder.mutation({
       query: (id) => ({
-        url: `/families/${id}`,
+        url: `/familiesMain/${id}`,
         method: "DELETE",
       }),
       invalidatesTags: ["FamilyMaster"],
@@ -82,10 +93,13 @@ export const familyMasterApi = createApi({
   }),
 });
 
+/* =========================
+   EXPORT HOOKS
+========================= */
 export const {
   useGetFamilyMastersQuery,
   useGetFamilyMasterByIdQuery,
   useAddFamilyMasterMutation,
   useUpdateFamilyMasterMutation,
   useDeleteFamilyMasterMutation,
-} = familyMasterApi;
+} = familyMasterMainApi;
