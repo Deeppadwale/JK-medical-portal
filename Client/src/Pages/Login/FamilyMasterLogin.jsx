@@ -70,13 +70,13 @@ function FamilyMasterLogin() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
               FamilyMaster
             </h1>
-            <p className="text-slate-500 text-sm">Secure Family Management Portal</p>
+           
           </div>
 
           {/* Security Badge */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <ShieldCheckIcon className="w-5 h-5 text-emerald-500" />
-            <span className="text-xs text-slate-500 font-medium">256-bit SSL Encrypted</span>
+            
           </div>
 
           {/* Login Form */}
@@ -154,14 +154,7 @@ function FamilyMasterLogin() {
 
           {/* Additional Info */}
           <div className="mt-8 pt-6 border-t border-slate-200">
-            <div className="text-center">
-              <p className="text-xs text-slate-500 mb-2">
-                Need help accessing your account?
-              </p>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
-                Contact Support
-              </button>
-            </div>
+            
           </div>
         </div>
 
