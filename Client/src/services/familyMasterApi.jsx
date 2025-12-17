@@ -17,9 +17,17 @@ export const familyMasterMainApi = createApi({
   tagTypes: ["FamilyMaster"],
 
   endpoints: (builder) => ({
-    /* =========================
-       GET ALL
-    ========================= */
+    
+
+  loginUser: builder.mutation({
+    query: (credentials) => ({
+      url: "/familiesMain/login", 
+      method: "POST",
+      body: credentials, 
+    }),
+  }),
+
+
     getFamilyMasters: builder.query({
       query: () => "/familiesMain",
       providesTags: ["FamilyMaster"],
@@ -97,9 +105,11 @@ export const familyMasterMainApi = createApi({
    EXPORT HOOKS
 ========================= */
 export const {
+  useLoginUserMutation,
   useGetFamilyMastersQuery,
   useGetFamilyMasterByIdQuery,
   useAddFamilyMasterMutation,
   useUpdateFamilyMasterMutation,
   useDeleteFamilyMasterMutation,
+
 } = familyMasterMainApi;

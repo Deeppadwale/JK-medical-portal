@@ -628,6 +628,14 @@ function OtpLoginPage() {
             </p>
           </>
         )}
+
+        {/* LINK TO FAMILY MASTER LOGIN */}
+        <p
+          className="text-center mt-6 text-blue-600 hover:underline cursor-pointer"
+          onClick={() => navigate("/familyMasterLogin")}
+        >
+          Login with FamilyMaster credentials
+        </p>
       </div>
     </motion.div>
   );

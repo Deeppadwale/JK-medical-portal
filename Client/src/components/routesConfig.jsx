@@ -1,6 +1,7 @@
 // src/components/routesConfig.js
 
 import OtpLoginPage from "../Pages/Login/otpLogin";
+import FamilyMasterLogin from "../Pages/Login/FamilyMasterLogin.jsx"
 import MemberMasterList from "../components/MemberMasterList";
 import MemberMaster from "../components/Master/MemberMaster";
 import Dashboard from "../Pages/Dashboard.jsx"
@@ -15,6 +16,13 @@ const routes = [
     element: OtpLoginPage,
     hideNavbar: true,
   },
+  
+    {
+    path: "/familyMasterLogin",
+    element: FamilyMasterLogin,
+    hideNavbar: true,
+  },
+
 
   // ===== APP =====
   {

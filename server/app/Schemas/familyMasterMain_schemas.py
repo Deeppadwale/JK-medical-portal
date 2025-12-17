@@ -22,5 +22,10 @@ class FamilyResponseSchema(BaseModel):
     User_Type: str
     User_Password: str
 
+
+class LoginSchema(BaseModel):
+    User_Name: str
+    User_Password: str    
+
     class Config:
         from_attributes = True  

@@ -1,7 +1,20 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.Models.FamilyMasterMain_model import FamilyMasterMain
-from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema
+from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, LoginSchema
+
+
+
+async def verify_user(db: AsyncSession, login_data: LoginSchema):
+    result = await db.execute(
+        select(FamilyMasterMain).where(FamilyMasterMain.User_Name == login_data.User_Name)
+    )
+    user = result.scalars().first()
+    
+    if user and user.User_Password == login_data.User_Password:
+        return user  
+    return None
+
 
 
 async def create_family(db: AsyncSession, data: FamilyCreateSchema):
@@ -10,7 +23,6 @@ async def create_family(db: AsyncSession, data: FamilyCreateSchema):
     await db.commit()
     await db.refresh(family)
     return family
-
 
 async def get_all_families(db: AsyncSession):
     result = await db.execute(select(FamilyMasterMain))

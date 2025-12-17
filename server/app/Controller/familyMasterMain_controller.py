@@ -3,13 +3,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.Models.database import get_db
-from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, FamilyResponseSchema
+from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, FamilyResponseSchema, LoginSchema
 from app.Services.familyMasterMain_services import (
     create_family,
     get_all_families,
     get_family_by_id,
     update_family,
-    delete_family
+    delete_family,
+    verify_user
 )
 
 router = APIRouter(
@@ -17,9 +18,23 @@ router = APIRouter(
     tags=["Family Master Main"]
 )
 
-# =========================
-# Create
-# =========================
+
+
+@router.post("/login")
+async def login_user(login_data: LoginSchema, db: AsyncSession = Depends(get_db)):
+    user = await verify_user(db, login_data)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    return {
+        "message": "Login successful",
+        "user_id": user.Family_id,
+        "user_name": user.User_Name,
+        "user_type": user.User_Type,
+        "Family_id":user.Family_id
+    }
+
+
 @router.post("/", response_model=FamilyResponseSchema)
 async def create_family_api(
     data: FamilyCreateSchema,

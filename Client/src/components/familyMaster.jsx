@@ -843,7 +843,7 @@ function FamilyMasterMain() {
                             ? "border-green-300 focus:border-green-500 focus:ring-green-500/20"
                             : "border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 hover:border-blue-300"
                         }`}
-                        placeholder="9876543210"
+                      
                         maxLength="10"
                       />
                       <div className="absolute left-3 top-1/2 transform -translate-y-1/2 flex items-center">
@@ -1108,7 +1108,7 @@ function FamilyMasterMain() {
                         selectedFamily.Mobile.split(',').map((mobile, index) => (
                           <div key={index} className="flex items-center py-1">
                             <PhoneIcon className="h-4 w-4 text-gray-400 mr-2" />
-                            <span className="font-medium text-gray-900">+91 {mobile}</span>
+                            <span className="font-medium text-gray-900"> {mobile}</span>
                           </div>
                         ))
                       ) : (
