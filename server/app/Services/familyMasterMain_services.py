@@ -1,11 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.Models.FamilyMasterMain_model import FamilyMasterMain
+from app.Models.FamilyMasterMain_model import Med_FamilyMaster
 from app.Schemas.familyMasterMain_schemas import FamilyCreateSchema, LoginSchema
 
 async def verify_user(db: AsyncSession, login_data: LoginSchema):
     result = await db.execute(
-        select(FamilyMasterMain).where(FamilyMasterMain.User_Name == login_data.User_Name)
+        select(Med_FamilyMaster).where(Med_FamilyMaster.User_Name == login_data.User_Name)
     )
     user = result.scalars().first()
     
@@ -16,20 +16,20 @@ async def verify_user(db: AsyncSession, login_data: LoginSchema):
 
 
 async def create_family(db: AsyncSession, data: FamilyCreateSchema):
-    family = FamilyMasterMain(**data.dict())
+    family = Med_FamilyMaster(**data.dict())
     db.add(family)
     await db.commit()
     await db.refresh(family)
     return family
 
 async def get_all_families(db: AsyncSession):
-    result = await db.execute(select(FamilyMasterMain))
+    result = await db.execute(select(Med_FamilyMaster))
     return result.scalars().all()
 
 
 async def get_family_by_id(db: AsyncSession, family_id: int):
     result = await db.execute(
-        select(FamilyMasterMain).where(FamilyMasterMain.Family_id == family_id)
+        select(Med_FamilyMaster).where(Med_FamilyMaster.Family_id == family_id)
     )
     return result.scalars().first()
 

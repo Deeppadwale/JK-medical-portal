@@ -16,7 +16,7 @@ from app.Services.memberMaster_Services import (
     delete_member
 )
 from app.Schemas.memberMaster_schemas import MemberCreate, MemberUpdate, MemberResponse
-from app.Models.memberMaster_model import MemberMaster
+from app.Models.memberMaster_model import Med_MemberMaster
 router = APIRouter(
     prefix="/members",
     tags=["Members"]
@@ -50,7 +50,7 @@ async def list_all_members(
 
 @router.get("/max-doc-no")
 async def get_max_doc_no_endpoint(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(func.max(MemberMaster.doc_No)))
+    result = await db.execute(select(func.max(Med_MemberMaster.doc_No)))
     max_doc_no = result.scalar()
     return  max_doc_no 
 

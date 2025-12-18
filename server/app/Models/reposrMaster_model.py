@@ -4,8 +4,8 @@ from datetime import date
 from app.Models.database import Base
 
 
-class ReportMaster(Base):
-    __tablename__ = "ReportMaster"
+class Med_ReportMaster(Base):
+    __tablename__ = "Med_ReportMaster"
 
     Report_id = Column(Integer, primary_key=True, autoincrement=True)
     doc_No = Column(Integer, nullable=False)

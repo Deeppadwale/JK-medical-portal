@@ -862,7 +862,7 @@ const {
 
     // Get fresh data from sessionStorage
     const familyId = sessionStorage.getItem("Family_id");
-    const userName = sessionStorage.getItem("User_name");
+    const userName = sessionStorage.getItem("user_name");
     
     console.log("Adding new member with:", {
       familyId,
@@ -1148,7 +1148,7 @@ const {
     }
 
     // Get current user data from sessionStorage
-    const currentUserName = sessionStorage.getItem("User_name") || "System";
+    const currentUserName = sessionStorage.getItem("user_name") || "System";
 
     try {
       const submitData = new FormData();
@@ -1195,7 +1195,7 @@ const {
     if (!row) return;
     
     // Get current user for Modified_by
-    const currentUserName = sessionStorage.getItem("User_name") || "System";
+    const currentUserName = sessionStorage.getItem("user_name") || "System";
     
     setFormData({
       doc_No: row.doc_No || "",
@@ -1256,7 +1256,7 @@ const {
   const resetForm = () => {
     // Get fresh data from sessionStorage
     const familyId = sessionStorage.getItem("Family_id");
-    const userName = sessionStorage.getItem("User_name");
+    const userName = sessionStorage.getItem("user_name");
     
     setFormData({
       doc_No: "",

@@ -646,15 +646,7 @@ function MemberReport() {
 
                     <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200">
                         <div className="flex justify-between items-center mb-6">
-                            <div>
-                                <h4 className="text-lg font-bold text-gray-800 flex items-center">
-                                    <FileText className="h-5 w-5 mr-3 text-purple-600" />
-                                    Report Details
-                                </h4>
-                                <p className="text-sm text-gray-500 mt-1">
-                                    Add individual reports with files and details
-                                </p>
-                            </div>
+                            
                             <button 
                                 type="button" 
                                 onClick={handleAddDetailRow} 

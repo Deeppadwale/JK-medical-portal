@@ -4,11 +4,11 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 from .database import Base
 
-class OTPVerification(Base):
-    __tablename__ = "Eve_otp_verification"
+class Med_OtpVerification(Base):
+    __tablename__ = "Med_OtpVerification"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    Family_id = Column(Integer, ForeignKey("FamilyMasterMain.Family_id"), nullable=False)
+    Family_id = Column(Integer, ForeignKey("Med_FamilyMaster.Family_id"), nullable=False)
     mobile = Column(String(20), nullable=False) 
     otp_code = Column(String(255), nullable=False)  
     expiry = Column(DateTime, nullable=False)
@@ -17,4 +17,4 @@ class OTPVerification(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
    
-    family = relationship("FamilyMasterMain", backref="otp_entries")
+    family = relationship("Med_FamilyMaster", backref="otp_entries")

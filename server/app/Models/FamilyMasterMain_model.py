@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, CHAR
 from sqlalchemy.dialects.mssql import NVARCHAR
 from app.Models.database import Base
 
-class FamilyMasterMain(Base):
-    __tablename__ = "FamilyMasterMain"  
+class Med_FamilyMaster(Base):
+    __tablename__ = "Med_FamilyMaster"  
 
     Family_id = Column(Integer, primary_key=True, autoincrement=True)
     Family_Name = Column(NVARCHAR(200), nullable=False)

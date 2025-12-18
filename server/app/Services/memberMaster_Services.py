@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 from datetime import date
 from typing import Optional
-from app.Models.memberMaster_model import MemberMaster
+from app.Models.memberMaster_model import Med_MemberMaster
 
 
 async def get_all_members(
@@ -14,31 +14,31 @@ async def get_all_members(
     family_id: Optional[int] = None
 ):
     query = (
-        select(MemberMaster)
-        .order_by(MemberMaster.Member_id.desc())
+        select(Med_MemberMaster)
+        .order_by(Med_MemberMaster.Member_id.desc())
         .offset(skip)
         .limit(limit)
     )
 
     if family_id is not None:
-        query = query.where(MemberMaster.Family_id == family_id)
+        query = query.where(Med_MemberMaster.Family_id == family_id)
 
     result = await db.execute(query)
     return result.scalars().all()
 
 async def get_max_doc_no(db: AsyncSession) -> int:
-    result = await db.execute(select(func.max(MemberMaster.doc_No)))
+    result = await db.execute(select(func.max(Med_MemberMaster.doc_No)))
     max_doc_no = result.scalar()
     return max_doc_no or 0
 
 
-async def get_member_by_id(db: AsyncSession, member_id: int) -> Optional[MemberMaster]:
-    result = await db.execute(select(MemberMaster).filter(MemberMaster.Member_id == member_id))
+async def get_member_by_id(db: AsyncSession, member_id: int) -> Optional[Med_MemberMaster]:
+    result = await db.execute(select(Med_MemberMaster).filter(Med_MemberMaster.Member_id == member_id))
     return result.scalars().first()
 
 
-async def get_member_by_mobile(db: AsyncSession, mobile_no: str) -> Optional[MemberMaster]:
-    result = await db.execute(select(MemberMaster).filter(MemberMaster.Mobile_no == mobile_no))
+async def get_member_by_mobile(db: AsyncSession, mobile_no: str) -> Optional[Med_MemberMaster]:
+    result = await db.execute(select(Med_MemberMaster).filter(Med_MemberMaster.Mobile_no == mobile_no))
     return result.scalars().first()
 
 
@@ -50,14 +50,14 @@ async def create_member(db: AsyncSession, member_data):
     data["doc_No"] = next_doc_no
     data["Created_at"] = date.today()
 
-    new_member = MemberMaster(**data)
+    new_member = Med_MemberMaster(**data)
     db.add(new_member)
     await db.commit()
     await db.refresh(new_member)
     return new_member
 
 
-async def update_member(db: AsyncSession, db_member: MemberMaster, update_data, pan_file_path=None, adhar_file_path=None, insurance_file_path=None):
+async def update_member(db: AsyncSession, db_member: Med_MemberMaster, update_data, pan_file_path=None, adhar_file_path=None, insurance_file_path=None):
     update_dict = update_data.dict(exclude_unset=True)
 
 
