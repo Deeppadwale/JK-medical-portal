@@ -1,57 +1,121 @@
-from pydantic import BaseModel
-from typing import Optional, List
-from datetime import date
+# from pydantic import BaseModel
+# from typing import Optional, List
+# from datetime import date
 
-class DetailRowAction(BaseModel):
-    detail_id: Optional[int]
-    report_date: Optional[date]
-    Report_id: Optional[int]
-    Doctor_and_Hospital_name: Optional[str]
-    row_action: str    
-    file_key: Optional[str] 
+# class DetailRowAction(BaseModel):
+#     detail_id: Optional[int]
+#     report_date: Optional[date]
+#     Report_id: Optional[int]
+#     Doctor_and_Hospital_name: Optional[str]
+#     row_action: str    
+#     file_key: Optional[str] 
   
     
 
-class MemberReportCreate(BaseModel):
+# class MemberReportCreate(BaseModel):
+#     Member_id: int
+#     Family_id: int
+#     purpose: str
+#     remarks: Optional[str]
+#     Created_by: str
+#     details: List[DetailRowAction] = []
+
+# class MemberReportUpdate(BaseModel):
+#     purpose: Optional[str]
+#     Modified_by: Optional[str]
+#     details: List[DetailRowAction] = []
+
+# class MemberReportDetailResponse(BaseModel):
+#     detail_id: int
+#     MemberReport_id: int
+#     report_date: date
+#     Report_id: int
+#     Doctor_and_Hospital_name: Optional[str]
+#     uploaded_file_report: Optional[str]
+
+#     class Config:
+#         orm_mode = True
+
+
+
+# class CreateMemberResponse(BaseModel):
+#     MemberReport_id: int
+#     doc_No: int
+#     Member_id: int
+#     Family_id: int
+#     purpose: str
+#     remarks: Optional[str]
+#     Created_by: str
+#     Modified_by: Optional[str]
+#     Created_at: date
+    
+#     details: List[MemberReportDetailResponse] = []
+
+# class MemberReportResponse(BaseModel):
+#     MemberReport_id: int
+#     doc_No: int
+#     Member_id: int
+#     Family_id: int
+#     purpose: str
+#     remarks: Optional[str]
+#     Created_by: str
+#     Modified_by: Optional[str]
+#     Created_at: date
+#     Family_Name: Optional[str]
+#     Member_name: Optional[str]
+    
+    
+#     details: List[MemberReportDetailResponse] = []
+
+#     class Config:
+#         orm_mode = True
+
+
+
+from pydantic import BaseModel
+from typing import List, Optional
+from datetime import date
+
+
+class MemberReportDetailSchema(BaseModel):
+    rowaction: str
+    detail_id: Optional[int]
+    report_date: date
+    Report_id: int
+    Doctor_and_Hospital_name: Optional[str]
+    file_key: Optional[str]
+
+
+class MemberReportHeadSchema(BaseModel):
     Member_id: int
     Family_id: int
     purpose: str
     remarks: Optional[str]
     Created_by: str
-    details: List[DetailRowAction] = []
-
-class MemberReportUpdate(BaseModel):
-    purpose: Optional[str]
     Modified_by: Optional[str]
-    details: List[DetailRowAction] = []
 
-class MemberReportDetailResponse(BaseModel):
-    detail_id: int
+
+class MemberReportResponse(BaseModel):
+    message: str
+    doc_No: int
     MemberReport_id: int
+    added: int
+    updated_ids: List[int]
+    deleted_ids: List[int]
+
+
+
+class MemberReportDetailViewSchema(BaseModel):
+    detail_id: int
     report_date: date
     Report_id: int
     Doctor_and_Hospital_name: Optional[str]
     uploaded_file_report: Optional[str]
 
     class Config:
-        orm_mode = True
+        orm_mode = True    
 
-
-
-class CreateMemberResponse(BaseModel):
-    MemberReport_id: int
-    doc_No: int
-    Member_id: int
-    Family_id: int
-    purpose: str
-    remarks: Optional[str]
-    Created_by: str
-    Modified_by: Optional[str]
-    Created_at: date
-    
-    details: List[MemberReportDetailResponse] = []
-
-class MemberReportResponse(BaseModel):
+class MemberReportResponseview(BaseModel):
     MemberReport_id: int
     doc_No: int
     Member_id: int
@@ -63,9 +127,10 @@ class MemberReportResponse(BaseModel):
     Created_at: date
     Family_Name: Optional[str]
     Member_name: Optional[str]
-    
-    
-    details: List[MemberReportDetailResponse] = []
+
+    details: List[MemberReportDetailViewSchema] = []
 
     class Config:
         orm_mode = True
+    
+    

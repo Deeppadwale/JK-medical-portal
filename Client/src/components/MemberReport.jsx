@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import TableUtility from "../common/TableUtility/TableUtility";
 import Modal from '../common/Modal/Modal';
 import CreateNewButton from "../common/Buttons/AddButton";
@@ -7,19 +7,22 @@ import {
   CheckCircleIcon, 
   XCircleIcon,
   DocumentArrowDownIcon,
-  EyeIcon
+  EyeIcon,
+  ChevronUpIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
-import { Trash2, Plus, X, User, FileText, ChevronRight, Calendar } from 'lucide-react';
+import { Trash2, Plus, X, User, FileText, ChevronRight, Calendar, Download, Eye } from 'lucide-react';
 import {
-    useGetReportsByFamilyQuery,
-    useCreateReportMutation,
-    useUpdateReportMutation,
-    useDeleteReportMutation,
-    useDownloadFileMutation
-} from '../services/memberReportApi';
+  useGetMemberReportsByFamilyQuery,
+  useCreateMemberReportMutation,
+  useUpdateMemberReportMutation,
+  useDeleteMemberReportMutation,
+  useLazyDownloadReportFileQuery,
+  useLazyPreviewReportFileQuery
+} from '../services/memberReportAPI';
 
 import {
-    useGetReportMastersQuery
+  useGetReportMastersQuery
 } from '../services/reportMasterApi';
 import { useGetMemberMastersQuery } from "../services/medicalAppoinmentApi";
 
@@ -31,8 +34,7 @@ function MemberReport() {
         Family_id: sessionStorage.getItem('family_id') || '',
         purpose: '',
         remarks: '',
-        Created_by: '',
-        Modified_by:'',
+        Created_by: sessionStorage.getItem('user_name') || '',
         details: []
     });
     const [editId, setEditId] = useState(null);
@@ -41,28 +43,57 @@ function MemberReport() {
     const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
     const [deleteIdToConfirm, setDeleteIdToConfirm] = useState(null);
     const [selectedMemberName, setSelectedMemberName] = useState('');
-    const [selectedReportName, setSelectedReportName] = useState({});
+    const [selectedReportNames, setSelectedReportNames] = useState({});
     const [deletedDetails, setDeletedDetails] = useState([]);
-    const [userData, setUserData] = useState({
-        Family_id: "",
-        User_name: ""
-    });
+    const [expandedRows, setExpandedRows] = useState({});
+    const detailRefs = useRef({});
     
     // Fetch all data
     const familyId = sessionStorage.getItem('family_id');
-    const { data: tableData = [], isLoading: isTableLoading, isError, refetch } = useGetReportsByFamilyQuery(familyId);
+    const { data: tableData = [], isLoading: isTableLoading, isError, refetch } = useGetMemberReportsByFamilyQuery(familyId);
     const { data: memberData = [], isLoading: isMemberLoading } = useGetMemberMastersQuery(familyId);
     const { data: reportData = [], isLoading: isReportLoading } = useGetReportMastersQuery();
     
     // Mutations
-    const [createReport] = useCreateReportMutation();
-    const [updateReport] = useUpdateReportMutation();
-    const [deleteReport] = useDeleteReportMutation();
-    const [downloadFile] = useDownloadFileMutation();
+    const [createMemberReport] = useCreateMemberReportMutation();
+    const [updateMemberReport] = useUpdateMemberReportMutation();
+    const [deleteMemberReport] = useDeleteMemberReportMutation();
+    const [triggerDownload] = useLazyDownloadReportFileQuery();
+    const [triggerPreview] = useLazyPreviewReportFileQuery();
 
     const showNotification = (message, type = 'success') => {
         setNotification({ show: true, message, type });
         setTimeout(() => setNotification(prev => ({ ...prev, show: false })), 3000);
+    };
+
+    // Function to extract just the filename (UUID) from path
+    const getFileNameFromPath = (filePath) => {
+        if (!filePath) return '';
+        
+        // If it's already just a filename (UUID with extension), return it
+        if (filePath.match(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}\.[a-zA-Z0-9]+$/)) {
+            return filePath;
+        }
+        
+        // Extract the basename (filename) from path
+        const pathParts = filePath.split(/[\\/]/);
+        return pathParts.pop() || '';
+    };
+
+    // Function to extract extension for display
+    const getFileExtension = (fileName) => {
+        if (!fileName) return '';
+        const parts = fileName.split('.');
+        return parts.length > 1 ? parts.pop().toUpperCase() : '';
+    };
+
+    // Function to get file icon based on extension
+    const getFileIcon = (fileName) => {
+        const ext = getFileExtension(fileName).toLowerCase();
+        if (['pdf'].includes(ext)) return '📄';
+        if (['doc', 'docx'].includes(ext)) return '📝';
+        if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return '🖼️';
+        return '📎';
     };
 
     // Find member name when Member_id changes
@@ -78,59 +109,25 @@ function MemberReport() {
     // Find report names when details change
     useEffect(() => {
         if (formData.details.length > 0 && reportData.length > 0) {
-            const newSelectedReportName = {};
+            const newSelectedReportNames = {};
             formData.details.forEach((detail, index) => {
                 if (detail.Report_id && detail.row_action !== 'delete') {
                     const report = reportData.find(r => r.Report_id === parseInt(detail.Report_id));
-                    newSelectedReportName[index] = report ? report.report_name : '';
+                    newSelectedReportNames[index] = report ? report.report_name : '';
                 }
             });
-            setSelectedReportName(newSelectedReportName);
+            setSelectedReportNames(newSelectedReportNames);
         }
     }, [formData.details, reportData]);
 
-   
+    // Reset expanded rows when modal opens/closes
     useEffect(() => {
-        const fetchUserData = () => {
-            try {
-               
-                const familyId = sessionStorage.getItem("family_id");
-                const userName = sessionStorage.getItem("user_name");
-                
-                console.log("sessionStorage data:", {
-                    Family_id: familyId,
-                    User_name: userName
-                });
-
-                const userData = {
-                    Family_id: familyId || "",
-                    User_name: userName || "System"
-                };
-
-                setUserData(userData);
-                
-                if (userName && !formData.Created_by) {
-                    setFormData(prev => ({
-                        ...prev,
-                        Created_by: userName
-                    }));
-                }
-
-                return userData;
-            } catch (error) {
-                console.error("Error getting user data from sessionStorage:", error);
-                return {
-                    Family_id: "",
-                    User_name: "System"
-                };
-            }
-        };
-
-        fetchUserData();
-    }, [formData.Created_by]);
+        if (!isModalOpen) {
+            setExpandedRows({});
+        }
+    }, [isModalOpen]);
 
     const handleAddNew = () => {
-
         const userName = sessionStorage.getItem('user_name') || '';
         
         setFormData({
@@ -139,39 +136,41 @@ function MemberReport() {
             purpose: '',
             remarks: '',
             Created_by: userName,
-            Modified_by:userName,
-
             details: []
         });
         setEditId(null);
         setFiles({});
         setDeletedDetails([]);
+        setExpandedRows({});
         setIsModalOpen(true);
     };
 
     const handleEdit = (row) => {
- 
         const userName = sessionStorage.getItem('user_name') || '';
         
+        // Create a unique file key for each detail to avoid conflicts
+        const detailsWithUniqueKeys = (row.details || []).map((d, idx) => ({
+            detail_id: d.detail_id,
+            report_date: d.report_date || '',
+            Report_id: d.Report_id?.toString() || '',
+            Doctor_and_Hospital_name: d.Doctor_and_Hospital_name || '',
+            uploaded_file_report: d.uploaded_file_report || '',
+            file_key: d.detail_id ? `existing_${d.detail_id}` : `temp_${Date.now()}_${idx}`,
+            row_action: 'update'
+        }));
+        
         setFormData({
-            Member_id: row.Member_id?.toString(),
+            Member_id: row.Member_id?.toString() || '',
             Family_id: sessionStorage.getItem('family_id') || row.Family_id?.toString() || '',
             purpose: row.purpose || '',
             remarks: row.remarks || '',
             Created_by: userName,
-            Modified_by:userName,
-            details: (row.details || []).map(d => ({
-                detail_id: d.detail_id,
-                report_date: d.report_date || '',
-                Report_id: d.Report_id?.toString() || '',
-                Doctor_and_Hospital_name: d.Doctor_and_Hospital_name || '',
-                uploaded_file_name: d.uploaded_file_report || '',
-                row_action: 'update'
-            }))
+            details: detailsWithUniqueKeys
         });
         setEditId(row.MemberReport_id);
         setFiles({});
         setDeletedDetails([]);
+        setExpandedRows({});
         setIsModalOpen(true);
     };
 
@@ -180,44 +179,142 @@ function MemberReport() {
         setShowDeleteConfirmModal(true);
     };
 
-
-    const handlePreview = (fileName) => {
-        if (!fileName) {
+    // Preview function - sends only filename
+    const handlePreview = async (filePath) => {
+        if (!filePath) {
             showNotification('No file to preview', 'error');
             return;
         }
         
-        try {
-            const previewUrl = `http://localhost:8000/member-report/preview/${encodeURIComponent(fileName)}`;
-            window.open(previewUrl, '_blank');
-        } catch (error) {
-            console.error('Failed to preview file:', error);
-            showNotification('Failed to preview file. It may be corrupted or missing.', 'error');
-        }
-    };
-
-
-    const handleDownload = async (fileName) => {
+        const fileName = getFileNameFromPath(filePath);
+        
         if (!fileName) {
-            showNotification('No file to download', 'error');
+            showNotification('Invalid file path', 'error');
             return;
         }
-
+        
         try {
             setIsLoading(true);
-            await downloadFile(fileName).unwrap();
-            showNotification('File downloaded successfully!');
+            const fileExt = getFileExtension(fileName);
+            showNotification(`Opening ${fileExt} preview...`, 'info');
+            
+            // Use just the filename (UUID with extension)
+            const previewUrl = `http://localhost:8000/member-report/preview/${encodeURIComponent(fileName)}`;
+            window.open(previewUrl, '_blank');
+            
+            showNotification('Preview opened successfully!');
         } catch (error) {
-            console.error('Download failed:', error);
-            showNotification('Failed to download file', 'error');
+            console.error('Failed to preview file:', error);
+            showNotification('Failed to preview file. Please try again.', 'error');
         } finally {
             setIsLoading(false);
         }
     };
 
+    // Download function - sends only filename
+    const handleDownload = async (filePath, reportName = '') => {
+        if (!filePath) {
+            showNotification('No file to download', 'error');
+            return;
+        }
+
+        const fileName = getFileNameFromPath(filePath);
+        
+        if (!fileName) {
+            showNotification('Invalid file path', 'error');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            const fileExt = getFileExtension(fileName);
+            showNotification(`Downloading ${fileExt} file...`, 'info');
+            
+            // Use just the filename (UUID with extension)
+            const downloadUrl = `http://localhost:8000/member-report/download/${encodeURIComponent(fileName)}`;
+            
+            // Create a temporary anchor element
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.setAttribute('download', fileName);
+            link.setAttribute('target', '_blank');
+            
+            // Append to body, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('Download started!');
+        } catch (error) {
+            console.error('Download failed:', error);
+            showNotification('Failed to download file. Please try again.', 'error');
+            
+            // Fallback: Open the URL directly
+            try {
+                window.open(`http://localhost:8000/member-report/download/${encodeURIComponent(fileName)}`, '_blank');
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError);
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Toggle row expansion
+    const toggleRowExpansion = (index) => {
+        setExpandedRows(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }));
+    };
+
+    // Handle arrow key navigation
+    const handleKeyDown = (e, index) => {
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = index + 1;
+            if (nextIndex < formData.details.length) {
+                setExpandedRows(prev => ({
+                    ...prev,
+                    [nextIndex]: true
+                }));
+                // Scroll to next element
+                setTimeout(() => {
+                    if (detailRefs.current[nextIndex]) {
+                        detailRefs.current[nextIndex].scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'nearest' 
+                        });
+                    }
+                }, 100);
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            const prevIndex = index - 1;
+            if (prevIndex >= 0) {
+                setExpandedRows(prev => ({
+                    ...prev,
+                    [prevIndex]: true
+                }));
+                // Scroll to previous element
+                setTimeout(() => {
+                    if (detailRefs.current[prevIndex]) {
+                        detailRefs.current[prevIndex].scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'nearest' 
+                        });
+                    }
+                }, 100);
+            }
+        } else if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleRowExpansion(index);
+        }
+    };
+
     const confirmDelete = async () => {
         try {
-            await deleteReport(deleteIdToConfirm).unwrap();
+            await deleteMemberReport(deleteIdToConfirm).unwrap();
             showNotification('Report deleted successfully!');
             refetch();
         } catch (error) {
@@ -236,12 +333,18 @@ function MemberReport() {
 
     const handleDetailChange = (index, field, value) => {
         const newDetails = [...formData.details];
-        newDetails[index][field] = value;
+        const detail = newDetails[index];
+        
+        if (!detail.row_action && detail.detail_id) {
+            detail.row_action = 'update';
+        }
+        
+        detail[field] = value;
         setFormData(prev => ({ ...prev, details: newDetails }));
         
         if (field === 'Report_id' && reportData.length > 0) {
             const report = reportData.find(r => r.Report_id === parseInt(value));
-            setSelectedReportName(prev => ({
+            setSelectedReportNames(prev => ({
                 ...prev,
                 [index]: report ? report.report_name : ''
             }));
@@ -252,39 +355,67 @@ function MemberReport() {
         const file = e.target.files[0];
         if (!file) return;
 
+        const detail = formData.details[index];
+        const fileKey = detail.file_key || `file_${Date.now()}_${index}`;
+        
+        // Update the detail with the file key
+        const newDetails = [...formData.details];
+        newDetails[index].file_key = fileKey;
+        setFormData(prev => ({ ...prev, details: newDetails }));
+        
+        // Update files state
         setFiles(prev => ({ 
             ...prev, 
-            [`file_${index}`]: file 
+            [fileKey]: file 
         }));
-
-        handleDetailChange(index, 'file_key', `file_${index}`);
     };
 
+    // Add new detail row at the BEGINNING with unique file key
     const handleAddDetailRow = () => {
+        const uniqueFileKey = `new_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const newDetail = {
+            report_date: new Date().toISOString().split("T")[0],
+            Report_id: '',
+            Doctor_and_Hospital_name: '',
+            file_key: uniqueFileKey,
+            row_action: 'add'
+        };
+        
+        // Shift all existing indices in expandedRows and selectedReportNames
+        const newExpandedRows = {};
+        const newSelectedReportNames = {};
+        
+        Object.keys(expandedRows).forEach(key => {
+            const keyNum = parseInt(key);
+            newExpandedRows[keyNum + 1] = expandedRows[key];
+        });
+        
+        Object.keys(selectedReportNames).forEach(key => {
+            const keyNum = parseInt(key);
+            newSelectedReportNames[keyNum + 1] = selectedReportNames[key];
+        });
+        
         setFormData(prev => ({
             ...prev,
-            details: [
-                ...prev.details,
-                {
-                    report_date: new Date().toISOString().split("T")[0],
-                    Report_id: '',
-                    Doctor_and_Hospital_name: '',
-                    file_key: '',
-                    row_action: 'add',
-                    uploaded_file_name: ''
-                }
-            ]
+            details: [newDetail, ...prev.details]
         }));
+        
+        // Set expanded state for the new row at index 0
+        newExpandedRows[0] = true;
+        setExpandedRows(newExpandedRows);
+        setSelectedReportNames(newSelectedReportNames);
     };
 
     const handleRemoveDetailRow = (index) => {
         const detailToRemove = formData.details[index];
         
         if (detailToRemove.row_action === 'add') {
+            // Remove newly added detail
             const newDetails = [...formData.details];
             newDetails.splice(index, 1);
             setFormData(prev => ({ ...prev, details: newDetails }));
             
+            // Remove associated file
             if (detailToRemove.file_key) {
                 setFiles(prev => {
                     const newFiles = { ...prev };
@@ -293,20 +424,38 @@ function MemberReport() {
                 });
             }
             
-            const newReportNames = { ...selectedReportName };
-            delete newReportNames[index];
-            setSelectedReportName(newReportNames);
+            // Shift indices for expandedRows and selectedReportNames
+            const newExpandedRows = {};
+            const newSelectedReportNames = {};
+            
+            Object.keys(expandedRows).forEach(key => {
+                const keyNum = parseInt(key);
+                if (keyNum > index) {
+                    newExpandedRows[keyNum - 1] = expandedRows[key];
+                } else if (keyNum < index) {
+                    newExpandedRows[keyNum] = expandedRows[key];
+                }
+            });
+            
+            Object.keys(selectedReportNames).forEach(key => {
+                const keyNum = parseInt(key);
+                if (keyNum > index) {
+                    newSelectedReportNames[keyNum - 1] = selectedReportNames[key];
+                } else if (keyNum < index) {
+                    newSelectedReportNames[keyNum] = selectedReportNames[key];
+                }
+            });
+            
+            setExpandedRows(newExpandedRows);
+            setSelectedReportNames(newSelectedReportNames);
         } else if (detailToRemove.detail_id) {
+            // Mark existing detail for deletion
             const newDetails = [...formData.details];
             newDetails[index].row_action = 'delete';
             setFormData(prev => ({ ...prev, details: newDetails }));
             
             setDeletedDetails(prev => [...prev, detailToRemove.detail_id]);
         }
-    };
-
-    const getActiveDetails = () => {
-        return formData.details.filter(detail => detail.row_action !== 'delete');
     };
 
     const handleRestoreDetail = (detailId) => {
@@ -320,20 +469,51 @@ function MemberReport() {
         }
     };
 
+    const getActiveDetails = () => {
+        return formData.details.filter(detail => detail.row_action !== 'delete');
+    };
+
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            setIsLoading(true);
-            
-            const submitData = {
-                Member_id: parseInt(formData.Member_id),
-                Family_id: parseInt(formData.Family_id),
-                purpose: formData.purpose,
-                remarks: formData.remarks || '',
-                Created_by: formData.Created_by,
-                Modified_by: formData.Modified_by,
+    e.preventDefault();
+    try {
+        setIsLoading(true);
+        
+        // Prepare payload according to backend structure
+        const payload = {
+            Member_id: parseInt(formData.Member_id),
+            Family_id: parseInt(formData.Family_id),
+            purpose: formData.purpose,
+            remarks: formData.remarks || '',
+            Created_by: formData.Created_by,
+            details: formData.details.map(detail => {
+                const detailObj = {
+                    report_date: detail.report_date,
+                    Report_id: parseInt(detail.Report_id),
+                    Doctor_and_Hospital_name: detail.Doctor_and_Hospital_name || '',
+                    row_action: detail.row_action || (detail.detail_id ? 'update' : 'add')
+                };
+                
+                if (detail.file_key) {
+                    detailObj.file_key = detail.file_key;
+                }
+                
+                return detailObj;
+            })
+        };
+
+        if (editId) {
+            // UPDATE: Use head and details structure
+            const updatePayload = {
+                head: {
+                    Member_id: parseInt(formData.Member_id),
+                    Family_id: parseInt(formData.Family_id),
+                    purpose: formData.purpose,
+                    remarks: formData.remarks || '',
+                    Created_by: formData.Created_by,
+                    Modified_by: sessionStorage.getItem('user_name') || ''
+                },
                 details: formData.details.map(detail => {
-                    const baseDetail = {
+                    const detailObj = {
                         report_date: detail.report_date,
                         Report_id: parseInt(detail.Report_id),
                         Doctor_and_Hospital_name: detail.Doctor_and_Hospital_name || '',
@@ -341,41 +521,43 @@ function MemberReport() {
                     };
                     
                     if (detail.detail_id) {
-                        baseDetail.detail_id = detail.detail_id;
+                        detailObj.detail_id = detail.detail_id;
                     }
                     
                     if (detail.file_key) {
-                        baseDetail.file_key = detail.file_key;
+                        detailObj.file_key = detail.file_key;
                     }
                     
-                    return baseDetail;
+                    return detailObj;
                 })
             };
-
-            if (editId) {
-                await updateReport({ 
-                    reportId: editId, 
-                    payload: submitData, 
-                    files 
-                }).unwrap();
-                showNotification('Report updated successfully!');
-            } else {
-                await createReport({ 
-                    payload: submitData, 
-                    files 
-                }).unwrap();
-                showNotification('Report created successfully!');
-            }
-            setIsModalOpen(false);
-            refetch();
-        } catch (error) {
-            console.error('Failed to save report:', error);
-            const errorMessage = error?.data?.message || error?.data?.detail || 'Failed to save report!';
-            showNotification(errorMessage, 'error');
-        } finally {
-            setIsLoading(false);
+            
+            await updateMemberReport({ 
+                MemberReport_id: editId, 
+                payload: updatePayload, 
+                files 
+            }).unwrap();
+            showNotification('Report updated successfully!');
+        } else {
+            // CREATE: Use simple payload structure
+            await createMemberReport({ 
+                payload: payload, 
+                files 
+            }).unwrap();
+            showNotification('Report created successfully!');
         }
-    };
+        
+        setIsModalOpen(false);
+        refetch();
+    } catch (error) {
+        console.error('Failed to save report:', error);
+        const errorMessage = error?.data?.detail || error?.data?.message || 'Failed to save report!';
+        showNotification(errorMessage, 'error');
+    } finally {
+        setIsLoading(false);
+    }
+};
+
 
     const activeDetails = getActiveDetails();
 
@@ -390,10 +572,10 @@ function MemberReport() {
             )
         },
         { 
-            header: 'Family ID', 
-            accessor: 'Family_Name',
+            header: 'Member Name', 
+            accessor: 'Member_name',
             cellRenderer: (row) => (
-                <div className="text-gray-800">{row.Family_id || "N/A"}</div>
+                <div className="text-gray-800">{row.Member_name || "N/A"}</div>
             )
         },
         { 
@@ -406,11 +588,74 @@ function MemberReport() {
             )
         },
         { 
-            header: 'Member Name', 
-            accessor: 'Member_name',
+            header: 'Remarks', 
+            accessor: 'remarks',
             cellRenderer: (row) => (
-                <div className="text-gray-800">{row.MemberReport_id || "N/A"}</div>
+                <div className="max-w-xs truncate" title={row.remarks}>
+                    {row.remarks || "N/A"}
+                </div>
             )
+        },
+        {
+            header: 'Created Date',
+            accessor: 'Created_at',
+            cellRenderer: (row) => (
+                <div className="text-gray-600">
+                    {row.Created_at ? new Date(row.Created_at).toLocaleDateString() : "N/A"}
+                </div>
+            )
+        },
+        {
+            header: 'Files',
+            accessor: 'files',
+            cellRenderer: (row) => {
+                const hasFiles = row.details?.some(d => d.uploaded_file_report);
+                if (!hasFiles) return <span className="text-gray-400">No files</span>;
+                
+                return (
+                    <div className="flex flex-wrap gap-2">
+                        {row.details?.map((detail, idx) => {
+                            if (!detail.uploaded_file_report) return null;
+                            
+                            const fileName = getFileNameFromPath(detail.uploaded_file_report);
+                            const fileIcon = getFileIcon(fileName);
+                            const fileExt = getFileExtension(fileName);
+                            const displayName = `${fileExt} File`;
+                            
+                            return (
+                                <div key={idx} className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 hover:bg-blue-100 transition-colors">
+                                    <span className="text-lg">{fileIcon}</span>
+                                    <div className="flex space-x-1">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handlePreview(detail.uploaded_file_report);
+                                            }}
+                                            title={`Preview ${fileExt} file`}
+                                            className="p-1.5 hover:bg-blue-200 rounded transition-colors"
+                                        >
+                                            <Eye className="h-4 w-4 text-blue-700" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDownload(detail.uploaded_file_report, displayName);
+                                            }}
+                                            title={`Download ${fileExt} file`}
+                                            className="p-1.5 hover:bg-green-200 rounded transition-colors"
+                                        >
+                                            <Download className="h-4 w-4 text-green-700" />
+                                        </button>
+                                    </div>
+                                    <span className="text-xs font-medium text-gray-700">
+                                        {displayName}
+                                    </span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                );
+            }
         },
         {
             header: 'Actions',
@@ -488,7 +733,6 @@ function MemberReport() {
                 <TableUtility
                     title={
                         <div className="flex items-center space-x-3">
-                            
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-800">Member Reports</h1>
                             </div>
@@ -496,7 +740,6 @@ function MemberReport() {
                     }
                     headerContent={
                         <div className="flex flex-wrap justify-between items-center gap-2">
-                           
                             <CreateNewButton
                                 onClick={handleAddNew}
                                 label={
@@ -507,8 +750,6 @@ function MemberReport() {
                                 }
                                 className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
                             />
-
-                         
                         </div>
                     }
                     columns={columns}
@@ -542,35 +783,30 @@ function MemberReport() {
                         </div>
                     </div>
                 } 
-                width={"2000px"}
+                width={"1200px"}
             >
                 <form onSubmit={handleSubmit} className="space-y-8">
-                   
+                    {/* Header Section */}
                     <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-2xl border border-blue-100">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                          
-                            <div className="w-full md:w-2/3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {/* Family ID */}
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                                     <User className="h-4 w-4 mr-2 text-blue-500" />
-                                    Family ID <span className="text-red-500 ml-1">*</span>
+                                    Family ID
                                 </label>
-                                <div className="relative">
-                                    <input 
-                                        type="text" 
-                                        name="Family_id" 
-                                        value={formData.Family_id} 
-                                        readOnly 
-                                        disabled
-                                        className="w-full px-4 py-3 border border-blue-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-not-allowed font-semibold text-blue-700"
-                                    />
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                        <ChevronRight className="h-5 w-5 text-blue-400" />
-                                    </div>
-                                </div>
+                                <input 
+                                    type="text" 
+                                    name="Family_id" 
+                                    value={formData.Family_id} 
+                                    readOnly 
+                                    disabled
+                                    className="w-full px-4 py-3 border border-blue-200 bg-white rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 cursor-not-allowed font-semibold text-blue-700"
+                                />
                             </div>
 
-                           
-                            <div className="col-span-1">
+                            {/* Member Selection */}
+                            <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                                     <User className="h-4 w-4 mr-2 text-blue-500" />
                                     Select Member <span className="text-red-500 ml-1">*</span>
@@ -601,14 +837,19 @@ function MemberReport() {
                                         </svg>
                                     </div>
                                 </div>
-                              
+                                {selectedMemberName && (
+                                    <p className="mt-2 text-sm text-green-600 font-medium">
+                                        {selectedMemberName}
+                                    </p>
+                                )}
                             </div>
-                                
-                            <div className="col-span-2">
+
+                            {/* Purpose */}
+                            <div className="lg:col-span-1">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     <span className="flex items-center">
                                         <FileText className="h-4 w-4 mr-2 text-blue-500" />
-                                        Purpose 
+                                        Purpose <span className="text-red-500 ml-1">*</span>
                                     </span>
                                 </label>
                                 <input 
@@ -617,15 +858,13 @@ function MemberReport() {
                                     value={formData.purpose} 
                                     onChange={handleInputChange} 
                                     placeholder="e.g., Annual Checkup"
-                                      className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
-                                    
+                                    required
+                                    className="w-full border-2 border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
                                 />
                             </div>
 
-
-
-                          
-                            <div className="lg:col-span-4">
+                            {/* Remarks */}
+                            <div className="lg:col-span-3">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     <span className="flex items-center">
                                         <FileText className="h-4 w-4 mr-2 text-blue-500" />
@@ -637,13 +876,14 @@ function MemberReport() {
                                     value={formData.remarks} 
                                     onChange={handleInputChange} 
                                     rows="2" 
-                                    Remarks  className="w-full border-2 border-gray-200 rounded-xl p-3 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
+                                    className="w-full border-2 border-gray-200 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 hover:border-blue-300 transition-all duration-200"
                                     placeholder="Additional notes, observations, or comments about this report..."
                                 />
                             </div>
                         </div>
                     </div>
 
+                    {/* Details Section */}
                     <div className="bg-gradient-to-r from-gray-50 to-white p-6 rounded-2xl border border-gray-200">
                         <div className="flex justify-between items-center mb-6">
                             
@@ -653,11 +893,11 @@ function MemberReport() {
                                 className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white font-medium rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                             >
                                 <Plus className="h-5 w-5" /> 
-                                <span>Add Report</span>
+                                <span>Add Detail</span>
                             </button>
                         </div>
 
-                    
+                        {/* Deleted Details Notice */}
                         {deletedDetails.length > 0 && (
                             <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl">
                                 <div className="flex justify-between items-center">
@@ -699,174 +939,250 @@ function MemberReport() {
                                 <p className="text-sm text-gray-500 mt-1">Click "Add Detail" to start adding reports</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="space-y-3">
                                 {activeDetails.map((detail, index) => {
-                                    const originalIndex = formData.details.findIndex(d => 
-                                        detail.detail_id ? 
-                                        d.detail_id === detail.detail_id : 
-                                        d === detail
-                                    );
+                                    const isExpanded = expandedRows[index] || false;
+                                    const reportName = selectedReportNames[index] || `Report ${activeDetails.length - index}`;
+                                    const fileName = detail.uploaded_file_report ? getFileNameFromPath(detail.uploaded_file_report) : '';
+                                    const fileIcon = getFileIcon(fileName);
+                                    const fileExt = getFileExtension(fileName);
                                     
                                     return (
-                                        <div key={detail.detail_id || index} className="bg-white p-5 rounded-xl border border-gray-200 hover:border-blue-300 hover:shadow-md transition-all duration-300">
-                                            <div className="flex justify-between items-center mb-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <div className={`p-2 rounded-lg ${detail.detail_id ? 'bg-yellow-100' : 'bg-green-100'}`}>
-                                                        {detail.detail_id ? (
-                                                            <FileText className="h-5 w-5 text-yellow-600" />
-                                                        ) : (
-                                                            <Plus className="h-5 w-5 text-green-600" />
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center space-x-1">
-                                                            <span className="font-semibold text-gray-800">Report Detail #{index + 1}</span>
+                                        <div 
+                                            key={detail.detail_id ? `detail_${detail.detail_id}` : `new_${detail.file_key}`}
+                                            ref={el => detailRefs.current[index] = el}
+                                            className="bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300"
+                                        >
+                                            {/* Collapsible Header */}
+                                            <div 
+                                                className="p-4 cursor-pointer hover:bg-gray-50 rounded-t-xl transition-colors"
+                                                onClick={() => toggleRowExpansion(index)}
+                                                onKeyDown={(e) => handleKeyDown(e, index)}
+                                                tabIndex={0}
+                                                role="button"
+                                                aria-expanded={isExpanded}
+                                                aria-label={`${isExpanded ? 'Collapse' : 'Expand'} report detail ${index + 1}`}
+                                            >
+                                                <div className="flex justify-between items-center">
+                                                    <div className="flex items-center space-x-3">
+                                                        <div className={`p-2 rounded-lg ${detail.detail_id ? 'bg-yellow-100' : 'bg-green-100'}`}>
                                                             {detail.detail_id ? (
-                                                                <span className="px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                                                                    Existing
-                                                                </span>
+                                                                <FileText className="h-5 w-5 text-yellow-600" />
                                                             ) : (
-                                                                <span className="px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                                                                    New
-                                                                </span>
+                                                                <Plus className="h-5 w-5 text-green-600" />
                                                             )}
                                                         </div>
-                                                        <p className="text-xs text-gray-500 mt-1">
-                                                            {selectedReportName[originalIndex] || 'Select report type'}
-                                                        </p>
+                                                        <div>
+                                                            <div className="flex items-center space-x-2">
+                                                                <span className="font-semibold text-gray-800">{reportName}</span>
+                                                                {detail.detail_id ? (
+                                                                    <span className="px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
+                                                                        Existing
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                                        New
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center space-x-2 mt-1 text-xs text-gray-500">
+                                                                <span>{detail.report_date || 'No date selected'}</span>
+                                                                {fileName && (
+                                                                    <>
+                                                                        <span>•</span>
+                                                                        <span className="flex items-center space-x-1">
+                                                                            <span>{fileIcon}</span>
+                                                                            <span>{fileExt} File</span>
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    {detail.uploaded_file_name && !files[`file_${originalIndex}`] && (
-                                                        <>
+                                                    <div className="flex items-center space-x-3">
+                                                        {detail.uploaded_file_report && !files[detail.file_key] && (
+                                                            <div className="flex space-x-1">
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handlePreview(detail.uploaded_file_report);
+                                                                    }}
+                                                                    title="Preview File"
+                                                                    className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                                                                >
+                                                                    <EyeIcon className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+                                                                </button>
+                                                                <button 
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDownload(detail.uploaded_file_report, reportName);
+                                                                    }}
+                                                                    title="Download File"
+                                                                    className="p-2 hover:bg-green-50 rounded-lg transition-colors group"
+                                                                >
+                                                                    <DocumentArrowDownIcon className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                        <button 
+                                                            type="button" 
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleRemoveDetailRow(index);
+                                                            }} 
+                                                            className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
+                                                        >
+                                                            <X className="h-5 w-5 text-red-500 group-hover:text-red-700" />
+                                                        </button>
+                                                        <div className="flex flex-col items-center">
                                                             <button 
                                                                 type="button"
-                                                                onClick={() => handlePreview(detail.uploaded_file_name)}
-                                                                title="Preview File"
-                                                                className="p-2 hover:bg-blue-50 rounded-lg transition-colors group"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (index > 0) {
+                                                                        handleKeyDown({ key: 'ArrowUp', preventDefault: () => {} }, index);
+                                                                    }
+                                                                }}
+                                                                disabled={index === 0}
+                                                                className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
+                                                                title="Navigate up"
                                                             >
-                                                                <EyeIcon className="h-4 w-4 text-blue-600 group-hover:text-blue-800" />
+                                                                <ChevronUpIcon className="h-3 w-3 text-gray-500" />
                                                             </button>
                                                             <button 
                                                                 type="button"
-                                                                onClick={() => handleDownload(detail.uploaded_file_name)}
-                                                                title="Download File"
-                                                                className="p-2 hover:bg-green-50 rounded-lg transition-colors group"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (index < activeDetails.length - 1) {
+                                                                        handleKeyDown({ key: 'ArrowDown', preventDefault: () => {} }, index);
+                                                                    }
+                                                                }}
+                                                                disabled={index === activeDetails.length - 1}
+                                                                className="p-1 hover:bg-gray-100 rounded disabled:opacity-30"
+                                                                title="Navigate down"
                                                             >
-                                                                <DocumentArrowDownIcon className="h-4 w-4 text-green-600 group-hover:text-green-800" />
+                                                                <ChevronDownIcon className="h-3 w-3 text-gray-500" />
                                                             </button>
-                                                        </>
-                                                    )}
-                                                    <button 
-                                                        type="button" 
-                                                        onClick={() => handleRemoveDetailRow(originalIndex)} 
-                                                        className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
-                                                    >
-                                                        <X className="h-5 w-5 text-red-500 group-hover:text-red-700" />
-                                                    </button>
+                                                        </div>
+                                                        <div className="text-gray-400">
+                                                            {isExpanded ? (
+                                                                <ChevronUpIcon className="h-5 w-5" />
+                                                            ) : (
+                                                                <ChevronDownIcon className="h-5 w-5" />
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             
-                                         
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                          
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                                        <Calendar className="h-4 w-4 mr-2 text-gray-500" />
-                                                        Report Date <span className="text-red-500 ml-1">*</span>
-                                                    </label>
-                                                    <input 
-                                                        type="date" 
-                                                        value={detail.report_date} 
-                                                        onChange={(e) => handleDetailChange(originalIndex, 'report_date', e.target.value)} 
-                                                        required 
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300" 
-                                                    />
-                                                </div>
-                                                
-                                         
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                                        <FileText className="h-4 w-4 mr-2 text-gray-500" />
-                                                        Report Type <span className="text-red-500 ml-1">*</span>
-                                                    </label>
-                                                    <div className="relative">
-                                                        <select 
-                                                            value={detail.Report_id} 
-                                                            onChange={(e) => handleDetailChange(originalIndex, 'Report_id', e.target.value)} 
-                                                            required 
-                                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10 hover:border-blue-300"
-                                                        >
-                                                            <option value="" className="text-gray-400">Select report type</option>
-                                                            {isReportLoading ? (
-                                                                <option value="" disabled>Loading report types...</option>
-                                                            ) : (
-                                                                reportData.map((report) => (
-                                                                    <option key={report.Report_id} value={report.Report_id}>
-                                                                        {report.report_name}
-                                                                    </option>
-                                                                ))
+                                            {/* Expandable Content */}
+                                            {isExpanded && (
+                                                <div className="px-4 pb-4 border-t border-gray-100 pt-4">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                                        {/* Report Date */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                                                <Calendar className="h-4 w-4 mr-2 text-gray-500" />
+                                                                Report Date <span className="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <input 
+                                                                type="date" 
+                                                                value={detail.report_date} 
+                                                                onChange={(e) => handleDetailChange(index, 'report_date', e.target.value)} 
+                                                                required 
+                                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300" 
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* Report Type */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                                                <FileText className="h-4 w-4 mr-2 text-gray-500" />
+                                                                Report Type <span className="text-red-500 ml-1">*</span>
+                                                            </label>
+                                                            <div className="relative">
+                                                                <select 
+                                                                    value={detail.Report_id} 
+                                                                    onChange={(e) => handleDetailChange(index, 'Report_id', e.target.value)} 
+                                                                    required 
+                                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none pr-10 hover:border-blue-300"
+                                                                >
+                                                                    <option value="" className="text-gray-400">Select report type</option>
+                                                                    {isReportLoading ? (
+                                                                        <option value="" disabled>Loading report types...</option>
+                                                                    ) : (
+                                                                        reportData.map((report) => (
+                                                                            <option key={report.Report_id} value={report.Report_id}>
+                                                                                {report.report_name}
+                                                                            </option>
+                                                                        ))
+                                                                    )}
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Doctor/Hospital */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
+                                                                <DocumentArrowDownIcon className="h-4 w-4 mr-2 text-gray-500" />
+                                                                Doctor/Hospital
+                                                            </label>
+                                                            <input 
+                                                                type="text" 
+                                                                placeholder="Doctor/Hospital name" 
+                                                                value={detail.Doctor_and_Hospital_name} 
+                                                                onChange={(e) => handleDetailChange(index, 'Doctor_and_Hospital_name', e.target.value)} 
+                                                                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300" 
+                                                            />
+                                                        </div>
+                                                        
+                                                        {/* File Upload */}
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                <span className="flex items-center">
+                                                                    <DocumentArrowDownIcon className="h-4 w-4 mr-2 text-gray-500" />
+                                                                    Upload File
+                                                                </span>
+                                                            </label>
+                                                            <div className="relative">
+                                                                <input 
+                                                                    type="file" 
+                                                                    onChange={(e) => handleFileChange(e, index)} 
+                                                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                                                />
+                                                            </div>
+                                                            {detail.uploaded_file_report && !files[detail.file_key] && (
+                                                                <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span className="text-lg">{fileIcon}</span>
+                                                                            <div>
+                                                                                <p className="text-xs font-medium text-gray-700">
+                                                                                    {fileExt} File
+                                                                                </p>
+                                                                                <p className="text-xs text-gray-500 truncate max-w-[150px]">
+                                                                                    {fileName}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                       
+                                                                    </div>
+                                                                </div>
                                                             )}
-                                                        </select>
-                                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                            </svg>
+                                                            {files[detail.file_key] && (
+                                                                <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                                                                    <p className="text-xs font-medium text-green-700 flex items-center space-x-1">
+                                                                        <span>📄</span>
+                                                                        <span>New file: {files[detail.file_key].name}</span>
+                                                                    </p>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
-                                                    {selectedReportName[originalIndex] && (
-                                                        <p className="mt-2 text-sm text-blue-600 font-medium truncate px-1">
-                                                            {selectedReportName[originalIndex]}
-                                                        </p>
-                                                    )}
                                                 </div>
-                                                
-                                             
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
-                                                        <DocumentArrowDownIcon className="h-4 w-4 mr-2 text-gray-500" />
-                                                        Doctor/Hospital
-                                                    </label>
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="Doctor/Hospital name" 
-                                                        value={detail.Doctor_and_Hospital_name} 
-                                                        onChange={(e) => handleDetailChange(originalIndex, 'Doctor_and_Hospital_name', e.target.value)} 
-                                                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-blue-300" 
-                                                    />
-                                                </div>
-                                                
-                                           
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        <span className="flex items-center">
-                                                            <DocumentArrowDownIcon className="h-4 w-4 mr-2 text-gray-500" />
-                                                            Upload File
-                                                        </span>
-                                                    </label>
-                                                    <div className="relative">
-                                                        <input 
-                                                            type="file" 
-                                                            onChange={(e) => handleFileChange(e, originalIndex)} 
-                                                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
-                                                        />
-                                                    </div>
-                                                    {detail.uploaded_file_name && !files[`file_${originalIndex}`] && (
-                                                        <div className="mt-2 p-2 bg-gray-50 rounded-lg">
-                                                            <p className="text-xs text-gray-600 truncate">
-                                                                Current: <span className="font-medium">{detail.uploaded_file_name}</span>
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {files[`file_${originalIndex}`] && (
-                                                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
-                                                            <p className="text-xs font-medium text-green-700">
-                                                                New file: {files[`file_${originalIndex}`].name}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -874,6 +1190,7 @@ function MemberReport() {
                         )}
                     </div>
 
+                    {/* Action Buttons */}
                     <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                         <button 
                             type="button" 
@@ -904,6 +1221,7 @@ function MemberReport() {
                 </form>
             </Modal>
 
+            {/* Delete Confirmation Modal */}
             <Modal 
                 isOpen={showDeleteConfirmModal} 
                 onClose={() => setShowDeleteConfirmModal(false)} 

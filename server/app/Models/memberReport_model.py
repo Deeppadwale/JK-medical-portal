@@ -7,7 +7,7 @@ from app.Models.database import Base
 class Med_MemberReport(Base):
     __tablename__ = "Med_MemberReport"
 
-    MemberReport_id = Column(Integer, primary_key=True)
+    MemberReport_id = Column(Integer, primary_key=True ,index=True)
     doc_No = Column(Integer, nullable=False)
     Member_id = Column(Integer, ForeignKey("Med_MemberMaster.Member_id"), nullable=False)
     Family_id = Column(Integer, nullable=False)

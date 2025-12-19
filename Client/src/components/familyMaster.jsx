@@ -476,7 +476,22 @@ function FamilyMasterMain() {
         maxHeight="90vh"
       >
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Modal Header with Gradient */}
+         {notification.show && (
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg transition-all duration-300 ${
+            notification.type === "success"
+              ? "bg-green-50 text-green-800 border border-green-200"
+              : "bg-red-50 text-red-800 border border-red-200"
+          }`}
+        >
+          {notification.type === "success" ? (
+            <CheckCircleIcon className="h-6 w-6 text-green-500 mr-3 flex-shrink-0" />
+          ) : (
+            <XCircleIcon className="h-6 w-6 text-red-500 mr-3 flex-shrink-0" />
+          )}
+          <span className="font-medium">{notification.message}</span>
+        </div>
+      )}
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-blue-50 via-indigo-50 to-blue-50 p-6 mb-4">
             <div className="absolute -right-10 -top-10 w-40 h-40 bg-blue-200 rounded-full opacity-20"></div>
             <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-indigo-200 rounded-full opacity-20"></div>

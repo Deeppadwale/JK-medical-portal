@@ -437,11 +437,16 @@
 
 // export default LoginPage;
 
+
 import React, { useState, useEffect, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
-import { useNavigate } from "react-router-dom";
-import { useSendOtpMutation, useVerifyOtpMutation } from "../../services/otpVerification";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  useSendOtpMutation,
+  useVerifyOtpMutation
+} from "../../services/otpVerification";
 import logo from "../../assets/pulse.png";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
 function OtpLoginPage() {
   const navigate = useNavigate();
@@ -452,9 +457,8 @@ function OtpLoginPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [otpSent, setOtpSent] = useState(false);
   const [timer, setTimer] = useState(0);
-  const [isResendEnabled, setIsResendEnabled] = useState(false);
+  const [showBackToOtp, setShowBackToOtp] = useState(false);
 
-  // OTP input refs
   const inputRefs = useRef([]);
 
   // API hooks
@@ -471,10 +475,7 @@ function OtpLoginPage() {
 
   // ---------------- TIMER ----------------
   useEffect(() => {
-    if (timer <= 0) {
-      setIsResendEnabled(true);
-      return;
-    }
+    if (timer <= 0) return;
     const interval = setInterval(() => setTimer(t => t - 1), 1000);
     return () => clearInterval(interval);
   }, [timer]);
@@ -486,7 +487,7 @@ function OtpLoginPage() {
   // ---------------- SEND OTP ----------------
   const handleSendOtp = async () => {
     if (!isValidMobile(mobile)) {
-      alert("Enter valid 10 digit mobile");
+      alert("Enter valid 10 digit mobile number");
       return;
     }
 
@@ -494,148 +495,330 @@ function OtpLoginPage() {
       await sendOtp({ mobile: normalizeMobile(mobile) }).unwrap();
       setOtpSent(true);
       setTimer(60);
-      setIsResendEnabled(false);
       setOtp(["", "", "", "", "", ""]);
+      setShowBackToOtp(true); // Show "Back to OTP" button
 
+      // Focus first OTP input
       setTimeout(() => {
-        inputRefs.current[0]?.focus();
-      }, 300);
+        if (inputRefs.current[0]) {
+          inputRefs.current[0].focus();
+        }
+      }, 100);
     } catch (err) {
       alert(err?.data?.detail || "OTP send failed");
     }
   };
 
   // ---------------- VERIFY OTP ----------------
-  const handleVerifyOtp = async () => {
-    const otpValue = otp.join("");
-    if (otpValue.length !== 6) return;
+ const handleVerifyOtp = async () => {
+  const otpValue = otp.join("");
 
-    try {
-      const res = await verifyOtp({
-        mobile: normalizeMobile(mobile),
-        otp_code: otpValue
-      }).unwrap();
+  // silently return if not 6 digits
+  if (otpValue.length !== 6) return;
 
-      sessionStorage.setItem("family_id", res.Family_id);
-      navigate("/app/member-list");
-    } catch {
-      alert("Invalid OTP");
-      setOtp(["", "", "", "", "", ""]);
-      inputRefs.current[0]?.focus();
-    }
-  };
+  try {
+    const res = await verifyOtp({
+      mobile: normalizeMobile(mobile),
+      otp_code: otpValue
+    }).unwrap();
+
+    sessionStorage.setItem("family_id", res.Family_id || "");
+    sessionStorage.setItem("User_Name", res.User_Name || "User");
+    sessionStorage.setItem("mobile", normalizeMobile(mobile));
+
+    navigate("/app/member-list");
+  } catch (error) {
+    alert(error?.data?.detail || "Invalid OTP");
+    setOtp(["", "", "", "", "", ""]);
+    inputRefs.current[0]?.focus();
+  }
+};
+
 
   // ---------------- OTP INPUT HANDLERS ----------------
   const handleOtpChange = (index, value) => {
+    // Allow only single digit
     if (!/^\d?$/.test(value)) return;
 
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
 
+    // Auto-focus next input if value entered
     if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
+      setTimeout(() => {
+        if (inputRefs.current[index + 1]) {
+          inputRefs.current[index + 1].focus();
+        }
+      }, 10);
+    }
+
+    // Auto-submit if all digits filled
+    if (index === 5 && value) {
+      const fullOtp = [...newOtp];
+      if (fullOtp.every(digit => digit !== "")) {
+        setTimeout(() => {
+          handleVerifyOtp();
+        }, 100);
+      }
     }
   };
 
   const handleKeyDown = (index, e) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
+    if (e.key === "Backspace") {
+      if (!otp[index] && index > 0) {
+        // Move to previous input if current is empty
+        e.preventDefault();
+        const newOtp = [...otp];
+        newOtp[index - 1] = "";
+        setOtp(newOtp);
+        
+        setTimeout(() => {
+          if (inputRefs.current[index - 1]) {
+            inputRefs.current[index - 1].focus();
+          }
+        }, 10);
+      } else if (otp[index]) {
+        // Clear current input
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      if (inputRefs.current[index - 1]) {
+        inputRefs.current[index - 1].focus();
+      }
+    } else if (e.key === "ArrowRight" && index < 5) {
+      e.preventDefault();
+      if (inputRefs.current[index + 1]) {
+        inputRefs.current[index + 1].focus();
+      }
+    } else if (e.key === "Enter") {
+      handleVerifyOtp();
     }
   };
 
   const handleOtpPaste = e => {
     e.preventDefault();
-    const pasted = e.clipboardData.getData("text").slice(0, 6);
-    if (!/^\d+$/.test(pasted)) return;
-
-    setOtp(pasted.split(""));
-    inputRefs.current[pasted.length - 1]?.focus();
+    const pasted = e.clipboardData.getData("text").trim();
+    const digits = pasted.replace(/\D/g, "").slice(0, 6);
+    
+    if (digits.length === 6) {
+      setOtp(digits.split(""));
+      
+      setTimeout(() => {
+        if (inputRefs.current[5]) {
+          inputRefs.current[5].focus();
+        }
+      }, 10);
+    }
   };
 
-  // ---------------- UI ----------------
+  // Handle resend OTP
+  const handleResendOtp = () => {
+    if (timer > 0) return;
+    handleSendOtp();
+  };
+
+  // Go back to mobile input
+  const handleBackToMobile = () => {
+    setOtpSent(false);
+    setShowBackToOtp(false);
+    setMobile("");
+    setOtp(["", "", "", "", "", ""]);
+  };
+
+  // Navigate back to login page
+  const handleBackToLogin = () => {
+    navigate("/familyMasterLogin");
+  };
+
   return (
-    <motion.div
-      className="flex items-center justify-center min-h-screen bg-gray-50 px-4"
-      animate={controls}
-      style={{
-        background: "linear-gradient(135deg, #f8fafc, #e2e8f0)",
-        backgroundSize: "400% 400%"
-      }}
-    >
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md">
-        {/* LOGO */}
-        <div className="text-center mb-6">
-          <img src={logo} className="w-20 mx-auto mb-2" />
-          <h2 className="text-2xl font-bold text-gray-800">OTP Login</h2>
-          <p className="text-sm text-gray-500 mt-1">Enter your mobile number to login</p>
+  <motion.div
+  className="relative min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex items-center justify-center p-4 overflow-hidden"
+  animate={controls}
+>
+
+      <div className="relative bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+        {/* LOGO & HEADER */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full mb-4">
+            <img src={logo} className="w-12 h-12" alt="logo" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">
+            {otpSent ? "Enter OTP" : "Welcome Back"}
+          </h2>
+          <p className="text-gray-500">
+            {otpSent 
+              ? "Enter the 6-digit code sent to your mobile" 
+              : "Enter your mobile number to continue"}
+          </p>
         </div>
 
-        {/* MOBILE INPUT */}
-        {!otpSent && (
-          <>
-            <label className="block mb-2 text-gray-700 font-medium">Mobile Number</label>
-            <input
-              className="w-full border border-gray-300 p-3 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={mobile}
-              onChange={e => setMobile(e.target.value)}
-              placeholder="+91"
-            />
+        {/* "Back to OTP" button - shown only after OTP is sent */}
+        {showBackToOtp && !otpSent && (
+          <div className="mb-6">
             <button
-              onClick={handleSendOtp}
-              disabled={sending}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-60"
+              onClick={() => {
+                setShowBackToOtp(false);
+                setOtpSent(true);
+              }}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 text-blue-700 rounded-lg hover:from-blue-100 hover:to-purple-100 transition-all duration-300 font-medium"
             >
-              {sending ? "Sending..." : "Send OTP"}
+              <ArrowLeftIcon className="w-5 h-5" />
+              Back to OTP Verification
             </button>
-          </>
+          </div>
         )}
 
-        {/* OTP INPUT */}
-        {otpSent && (
-          <>
-            <p className="text-center text-gray-600 mb-4">Enter 6 digit OTP</p>
-
-            <div
-              className="flex justify-center gap-2 mb-4"
-              onPaste={handleOtpPaste}
-            >
-              {otp.map((digit, index) => (
+        {/* MOBILE INPUT SECTION */}
+        {!otpSent ? (
+          <div className="space-y-6">
+            <div>
+              <label className="block mb-2 text-gray-700 font-medium">
+                Mobile Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-gray-500 font-medium">+91</span>
+                </div>
                 <input
-                  key={index}
-                  ref={el => (inputRefs.current[index] = el)}
-                  type="text"
+                  className="w-full border border-gray-300 p-3 pl-14 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+                  value={mobile}
+                  onChange={e => setMobile(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleSendOtp()}
+                  placeholder="9876543210"
                   inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={e => handleOtpChange(index, e.target.value)}
-                  onKeyDown={e => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-lg font-medium border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  maxLength={10}
+                  autoFocus
                 />
-              ))}
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                Enter 10-digit mobile number without country code
+              </p>
             </div>
 
             <button
-              onClick={handleVerifyOtp}
-              disabled={verifying || otp.join("").length !== 6}
-              className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-medium disabled:opacity-60"
+              onClick={handleSendOtp}
+              disabled={sending || !isValidMobile(mobile)}
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3.5 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-medium disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
             >
-              {verifying ? "Verifying..." : "Verify OTP"}
+              {sending ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Sending OTP...
+                </div>
+              ) : (
+                "Send OTP"
+              )}
             </button>
 
-            <p className="text-center mt-4 text-sm text-gray-500">
-              {timer > 0 ? `Resend in ${timer}s` : "You can resend OTP"}
-            </p>
-          </>
+            {/* Link to go back to main login page */}
+            <div className="text-center">
+              <button
+                onClick={handleBackToLogin}
+                className="text-sm text-gray-500 hover:text-gray-700 hover:underline transition-colors"
+              >
+                ← Back to Login Options
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* OTP INPUT SECTION */
+          <div className="space-y-6">
+            {/* Back button */}
+            <button
+              onClick={handleBackToMobile}
+              className="absolute top-4 left-4 flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors group"
+            >
+              <ArrowLeftIcon className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+
+            {/* Mobile display */}
+            <div className="text-center mb-2">
+              <p className="text-gray-600">
+                OTP sent to <span className="font-semibold">+91 {normalizeMobile(mobile)}</span>
+              </p>
+            </div>
+
+            {/* OTP Inputs */}
+            <div>
+              <label className="block mb-3 text-gray-700 font-medium text-center">
+                6-Digit Verification Code
+              </label>
+              <div
+                className="flex justify-center gap-3 mb-6"
+                onPaste={handleOtpPaste}
+              >
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={el => (inputRefs.current[index] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={e => handleOtpChange(index, e.target.value)}
+                    onKeyDown={e => handleKeyDown(index, e)}
+                    onFocus={(e) => e.target.select()}
+                    className="w-14 h-14 text-center text-2xl font-bold border-2 border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                    autoComplete="off"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Verify Button */}
+            <button
+              onClick={handleVerifyOtp}
+              disabled={verifying || otp.join("").length !== 6}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3.5 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-300 font-medium disabled:opacity-60 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+            >
+              {verifying ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Verifying...
+                </div>
+              ) : (
+                "Verify OTP"
+              )}
+            </button>
+
+            {/* Resend OTP */}
+            <div className="text-center">
+              <p className="text-gray-500 text-sm">
+                {timer > 0 ? (
+                  <span>Resend OTP in <span className="font-semibold">{timer}s</span></span>
+                ) : (
+                  <button
+                    onClick={handleResendOtp}
+                    className="text-blue-600 hover:text-blue-800 font-medium hover:underline transition-colors"
+                  >
+                    Resend OTP
+                  </button>
+                )}
+              </p>
+              <p className="text-xs text-gray-400 mt-2">
+                OTP is valid for 10 minutes
+              </p>
+            </div>
+
+            {/* Change mobile number */}
+            <div className="text-center">
+              <button
+                onClick={handleBackToMobile}
+                className="text-sm text-gray-500 hover:text-gray-700 hover:underline transition-colors"
+              >
+                Wrong number? Change mobile
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* LINK TO FAMILY MASTER LOGIN */}
-        <p
-          className="text-center mt-6 text-blue-600 hover:underline cursor-pointer"
-          onClick={() => navigate("/familyMasterLogin")}
-        >
-          Login with FamilyMaster credentials
-        </p>
+        {/* Footer */}
+        
       </div>
     </motion.div>
   );
